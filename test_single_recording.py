@@ -103,26 +103,47 @@ finally:
     if 'connection' in locals():
         connection.close()
 
-# Step 3: Check File Access
-print("\n3. FILE ACCESS CHECK")
+# Step 3: Copy File via SSH
+print("\n3. FILE TRANSFER VIA SSH")
 print("-" * 30)
 
-# Construct NFS path
-nfs_mount = "/var/log/orkaudio.prod.nfs"
+# SSH configuration
+SSH_USER = "estillmane"
+SSH_HOST = "s40vpsoxweb002"
+REMOTE_BASE = "/var/log/orkaudio.prod.nfs"
+
+# Construct remote path
 if recording['filename'].startswith('/'):
-    file_path = nfs_mount + recording['filename']
+    remote_path = REMOTE_BASE + recording['filename']
 else:
-    file_path = os.path.join(nfs_mount, recording['filename'])
+    remote_path = os.path.join(REMOTE_BASE, recording['filename'])
 
-print(f"  Full path: {file_path}")
+print(f"  Remote path: {remote_path}")
 
-# Check if we can access the file
-if os.path.exists(file_path):
-    file_size = os.path.getsize(file_path)
-    print(f"✓ File accessible: {file_size:,} bytes")
+# Create temp directory for the file
+import tempfile
+temp_dir = tempfile.mkdtemp(prefix="scream_test_")
+local_file = os.path.join(temp_dir, os.path.basename(recording['filename']))
+
+# Copy via SCP
+import subprocess
+scp_cmd = [
+    'scp',
+    f'{SSH_USER}@{SSH_HOST}:{remote_path}',
+    local_file
+]
+
+print(f"  Copying via SSH...")
+scp_result = subprocess.run(scp_cmd, capture_output=True, text=True)
+
+if scp_result.returncode == 0 and os.path.exists(local_file):
+    file_size = os.path.getsize(local_file)
+    print(f"✓ File copied: {file_size:,} bytes")
+    print(f"  Local temp: {local_file}")
+    file_path = local_file  # Use local copy for processing
 else:
-    print("✗ File not found at expected path")
-    print("  Please verify NFS mount is accessible")
+    print("✗ Failed to copy file")
+    print(f"  Error: {scp_result.stderr}")
     sys.exit(1)
 
 # Step 4: Test Whisper
@@ -250,3 +271,11 @@ for line in transcript_lines[:3]:
 
 print("\n✅ TEST COMPLETE!")
 print(f"   Check {output_dir}/ for full results")
+
+# Cleanup temp file
+print("\nCleaning up temp files...")
+if 'local_file' in locals() and os.path.exists(local_file):
+    os.remove(local_file)
+if 'temp_dir' in locals() and os.path.exists(temp_dir):
+    os.rmdir(temp_dir)
+print("✓ Temp files removed")
