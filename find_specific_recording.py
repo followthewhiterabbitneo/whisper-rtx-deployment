@@ -18,7 +18,7 @@ print(f"Searching for: {target_file}")
 print("=" * 50)
 
 # Extract date from filename (YYYYMMDD_HHMMSS_XXXX.wav)
-# 20250620 = June 20, 2025
+# 20250620 = June 20, 2025 (yesterday)
 year = target_file[0:4]    # 2025
 month = target_file[4:6]   # 06
 day = target_file[6:8]     # 20
