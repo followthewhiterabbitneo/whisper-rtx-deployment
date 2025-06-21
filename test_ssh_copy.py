@@ -30,9 +30,13 @@ else:
     print(f"  Error: {ssh_test.stderr}")
     exit(1)
 
-# Step 2: Find a sample WAV file
-print("\n2. Looking for a sample WAV file...")
-find_cmd = f"find {REMOTE_BASE}/audio -name '*.wav' -type f | head -1"
+# Step 2: Use specific WAV file
+print("\n2. Using specific WAV file...")
+target_filename = "20250620_145645_LOLW.wav"
+print(f"  Target: {target_filename}")
+
+# Search for this specific file
+find_cmd = f"find {REMOTE_BASE}/audio -name '{target_filename}' -type f"
 ssh_find = subprocess.run(
     ['ssh', f'{SSH_USER}@{SSH_HOST}', find_cmd],
     capture_output=True, text=True
@@ -40,13 +44,21 @@ ssh_find = subprocess.run(
 
 if ssh_find.returncode == 0 and ssh_find.stdout.strip():
     remote_file = ssh_find.stdout.strip()
-    print(f"✓ Found: {remote_file}")
+    print(f"✓ Found at: {remote_file}")
 else:
-    print("✗ No WAV files found")
-    # Try to list directory structure
-    print("\nChecking directory structure...")
-    ls_cmd = f"ls -la {REMOTE_BASE}/ | head -10"
-    subprocess.run(['ssh', f'{SSH_USER}@{SSH_HOST}', ls_cmd])
+    print(f"✗ File {target_filename} not found")
+    print("\nSearching in expected location...")
+    # Try the expected path based on the date in filename (YYYYMMDD)
+    # 20250620 = 2025/06/20
+    expected_path = f"{REMOTE_BASE}/audio/2025/06/20"
+    ls_cmd = f"ls -la {expected_path}/*{target_filename} 2>/dev/null || echo 'Not in expected path'"
+    result = subprocess.run(['ssh', f'{SSH_USER}@{SSH_HOST}', ls_cmd], capture_output=True, text=True)
+    print(result.stdout)
+    
+    # List what's actually there
+    print(f"\nChecking what files exist in {expected_path}/...")
+    ls_cmd2 = f"ls {expected_path}/ 2>/dev/null | grep -E '(LOLW|wav)' | head -10"
+    subprocess.run(['ssh', f'{SSH_USER}@{SSH_HOST}', ls_cmd2])
     exit(1)
 
 # Step 3: Get file info
