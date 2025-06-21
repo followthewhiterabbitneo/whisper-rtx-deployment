@@ -48,7 +48,7 @@ whisper-rtx-deployment/
 ### Workflow
 1. **GitHub Repo**: https://github.com/followthewhiterabbitneo/whisper-rtx-deployment
    - **SSH Remote**: git@github.com:followthewhiterabbitneo/whisper-rtx-deployment.git (required for pushing)
-2. **Kaggle Dataset**: whisper-rtx-deploymnt (for sharing results and files between WSL2 and RTX)
+2. **Kaggle Dataset**: whisper-rtx-deployment (for sharing results and files between WSL2 and RTX)
 3. **Model Source**: deepdml/faster-whisper-large-v3-turbo-ct2 on Kaggle
 
 ### Current Status
