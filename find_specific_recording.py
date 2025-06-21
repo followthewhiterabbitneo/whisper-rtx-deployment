@@ -41,27 +41,27 @@ hour = target_file[9:11]   # 14
 print(f"Expected date: {year}/{month}/{day}")
 print(f"Expected hour: {hour}")
 
-# Search strategies
+# Search strategies - EFFICIENT ORDER
 searches = [
-    # 1. Full search (might be slow)
-    (f"find {REMOTE_BASE}/audio -name '{target_file}' -type f 2>/dev/null | head -1", 
-     "Full search in audio directory"),
-    
-    # 2. Expected path based on date
+    # 1. Expected exact path (FASTEST)
     (f"ls -la {REMOTE_BASE}/audio/{year}/{month}/{day}/{hour}/{target_file} 2>/dev/null",
      f"Direct path: audio/{year}/{month}/{day}/{hour}/"),
     
-    # 3. Check all hours of that day
-    (f"ls -la {REMOTE_BASE}/audio/{year}/{month}/{day}/*/{target_file} 2>/dev/null",
-     f"All hours on {year}/{month}/{day}"),
+    # 2. List all files in that hour directory
+    (f"ls -la {REMOTE_BASE}/audio/{year}/{month}/{day}/{hour}/ 2>/dev/null | grep -E '(LOLW|wav$)' | head -10",
+     f"List files in hour {hour} directory"),
     
-    # 4. Search by orkuid
-    (f"find {REMOTE_BASE}/audio -name '*LOLW.wav' -type f 2>/dev/null | head -5",
-     "Search for any file ending with LOLW.wav"),
+    # 3. Check all hours of that day (if wrong hour)
+    (f"ls {REMOTE_BASE}/audio/{year}/{month}/{day}/*/{target_file} 2>/dev/null",
+     f"Check all hours on {year}/{month}/{day}"),
     
-    # 5. Check if date directory exists
-    (f"ls -ld {REMOTE_BASE}/audio/{year}/{month}/{day}/ 2>/dev/null",
-     f"Check if date directory exists"),
+    # 4. Just list what hours exist for that day
+    (f"ls -d {REMOTE_BASE}/audio/{year}/{month}/{day}/*/ 2>/dev/null | head -10",
+     f"Show available hours for {year}/{month}/{day}"),
+    
+    # 5. Only if needed - limited search in the day directory
+    (f"find {REMOTE_BASE}/audio/{year}/{month}/{day} -name '*LOLW.wav' -type f 2>/dev/null",
+     f"Search only in {year}/{month}/{day} for LOLW files"),
 ]
 
 # Try each search
