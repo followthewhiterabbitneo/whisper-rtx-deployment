@@ -17,6 +17,20 @@ target_file = "20250620_145645_LOLW.wav"
 print(f"Searching for: {target_file}")
 print("=" * 50)
 
+# Test SSH connection first
+print("\nTesting SSH connection...")
+test_cmd = ['ssh', '-v', f'{SSH_USER}@{SSH_HOST}', 'echo "SSH_OK"']
+test_result = subprocess.run(test_cmd, capture_output=True, text=True)
+
+if "SSH_OK" in test_result.stdout:
+    print("✓ SSH connection successful")
+else:
+    print("✗ SSH connection failed")
+    print(f"STDOUT: {test_result.stdout}")
+    print(f"STDERR: {test_result.stderr[:500]}")  # First 500 chars
+    print(f"Return code: {test_result.returncode}")
+    sys.exit(1)
+
 # Extract date from filename (YYYYMMDD_HHMMSS_XXXX.wav)
 # 20250620 = June 20, 2025 (yesterday)
 year = target_file[0:4]    # 2025
@@ -55,18 +69,24 @@ for cmd, description in searches:
     print(f"\n{description}:")
     print(f"  Command: {cmd}")
     
-    result = subprocess.run(
-        ['ssh', f'{SSH_USER}@{SSH_HOST}', cmd],
-        capture_output=True, text=True
-    )
+    # Show what we're running
+    full_cmd = ['ssh', f'{SSH_USER}@{SSH_HOST}', cmd]
+    print(f"  Running: ssh {SSH_USER}@{SSH_HOST} '{cmd}'")
+    
+    result = subprocess.run(full_cmd, capture_output=True, text=True)
+    
+    print(f"  Return code: {result.returncode}")
     
     if result.stdout.strip():
-        print(f"  ✓ Result: {result.stdout.strip()}")
+        print(f"  ✓ STDOUT: {result.stdout.strip()}")
         if target_file in result.stdout:
             print(f"\n✅ FOUND! File location confirmed")
             break
     else:
-        print(f"  ✗ No results")
+        print(f"  ✗ No stdout results")
+        
+    if result.stderr.strip():
+        print(f"  STDERR: {result.stderr.strip()}")
 
 # Also check in database
 print("\n" + "=" * 50)
