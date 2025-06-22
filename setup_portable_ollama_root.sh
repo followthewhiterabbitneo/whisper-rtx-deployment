@@ -8,7 +8,7 @@ echo "1. Creating directories in /moneyball/ollama..."
 mkdir -p /moneyball/ollama/bin
 mkdir -p /moneyball/ollama/models
 mkdir -p /moneyball/ollama/data
-chown -R estillmane:estillmane /moneyball/ollama
+chown -R estillmane:"domain users" /moneyball/ollama
 
 # Download Ollama binary
 echo ""
@@ -16,7 +16,7 @@ echo "2. Downloading Ollama binary..."
 cd /moneyball/ollama/bin
 wget -q --show-progress https://github.com/ollama/ollama/releases/download/v0.1.38/ollama-linux-amd64 -O ollama
 chmod +x ollama
-chown estillmane:estillmane ollama
+chown estillmane:"domain users" ollama
 
 # Verify download
 if [ -f "ollama" ]; then
@@ -47,7 +47,7 @@ echo "Logs: /moneyball/ollama/ollama.log"
 EOF
 
 chmod +x /moneyball/ollama/start_ollama.sh
-chown estillmane:estillmane /moneyball/ollama/start_ollama.sh
+chown estillmane:"domain users" /moneyball/ollama/start_ollama.sh
 
 # Create user convenience script
 echo ""
@@ -60,7 +60,7 @@ export OLLAMA_MODELS=/moneyball/ollama/models
 EOF
 
 chmod +x /home/estillmane/run_gemma.sh
-chown estillmane:estillmane /home/estillmane/run_gemma.sh
+chown estillmane:"domain users" /home/estillmane/run_gemma.sh
 
 echo ""
 echo "=== Setup Complete ==="
