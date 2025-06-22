@@ -20,8 +20,9 @@ def query_gemma(prompt, max_tokens=500):
         result = subprocess.run(
             cmd,
             input=prompt,
-            capture_output=True,
-            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
             timeout=30
         )
         if result.returncode == 0:
