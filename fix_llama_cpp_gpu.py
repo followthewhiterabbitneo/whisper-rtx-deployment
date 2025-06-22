@@ -17,14 +17,21 @@ subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "llama-cpp-pytho
 print("\n2. Installing llama-cpp-python with CUDA support...")
 print("This will take a few minutes to compile...")
 
-# For Windows with CUDA 12.x
-install_cmd = [
-    sys.executable, "-m", "pip", "install", 
-    "llama-cpp-python",
-    "--force-reinstall",
-    "--no-cache-dir",
-    "--extra-index-url", "https://abetlen.github.io/llama-cpp-python/whl/cu121"
-]
+# For Windows with CUDA 12.x - use pre-built wheel
+print("Detecting system...")
+import platform
+if platform.system() == "Windows":
+    # Direct wheel URL for Windows CUDA 12.1
+    wheel_url = "https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.2-cu121/llama_cpp_python-0.3.2-cp311-cp311-win_amd64.whl"
+    install_cmd = [sys.executable, "-m", "pip", "install", wheel_url]
+else:
+    install_cmd = [
+        sys.executable, "-m", "pip", "install", 
+        "llama-cpp-python",
+        "--force-reinstall",
+        "--no-cache-dir",
+        "--extra-index-url", "https://abetlen.github.io/llama-cpp-python/whl/cu121"
+    ]
 
 result = subprocess.run(install_cmd)
 
