@@ -37,7 +37,7 @@ def main():
     else:
         print(f"Extracting {tar_file.name}...")
         cmd = ["tar", "-xzf", str(tar_file), "-C", str(models_dir)]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         if result.returncode != 0:
             print(f"ERROR extracting: {result.stderr}")
             sys.exit(1)
@@ -54,7 +54,7 @@ def main():
     # Check GPU availability
     print("\n=== GPU Check ===")
     try:
-        result = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True)
+        result = subprocess.run(["nvidia-smi", "-L"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         if result.returncode == 0:
             print(result.stdout.strip())
         else:
