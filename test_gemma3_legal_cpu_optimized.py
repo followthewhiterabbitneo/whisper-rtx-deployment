@@ -171,13 +171,16 @@ if __name__ == "__main__":
         transcript_file = sys.argv[1]
         
         # Quick loan number extraction (no model needed)
-        print("Quick scan for loan numbers...")
+        # This runs BEFORE loading the model to give instant feedback
+        print("Quick scan for loan numbers (regex, no AI needed)...")
         with open(transcript_file, 'r', encoding='utf-8') as f:
             text = f.read()
         
         loan_numbers = extract_loan_numbers(text)
         if loan_numbers:
             print(f"Found potential loan numbers: {', '.join(loan_numbers)}")
+        else:
+            print("No obvious loan numbers found with simple patterns")
         
         print("\n" + "-"*50 + "\n")
         
