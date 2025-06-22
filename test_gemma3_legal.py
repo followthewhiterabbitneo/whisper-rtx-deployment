@@ -15,6 +15,7 @@ MODEL_PATH = "models/gemma-3-12b-it-qat-q4_0/gemma-3-12b-it-qat-q4_0.gguf"
 def load_model():
     """Load Gemma 3 12B with optimal settings for RTX 4090"""
     print("Loading Gemma 3 12B QAT model...")
+    print("Attempting to use GPU...")
     
     llm = Llama(
         model_path=MODEL_PATH,
@@ -22,7 +23,7 @@ def load_model():
         n_ctx=32768,          # 32K context (can go up to 128K)
         n_batch=512,          # Batch size for prompt processing
         n_threads=8,          # CPU threads
-        verbose=False         # Quiet loading
+        verbose=True          # Show loading details to debug GPU
     )
     
     print("✓ Model loaded successfully")
