@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Explore Oreka Database Structure - First Principles
-Target: s40vdsoxweb047:3306/oreka (MariaDB 5.5.68)
+Target: s01vdsoxweb047:3306/oreka (MariaDB 5.5.68)
 """
 
 import sys
@@ -21,7 +21,7 @@ except ImportError:
 
 # Database configuration
 DB_CONFIG = {
-    'host': 's40vdsoxweb047',
+    'host': 's01vdsoxweb047',
     'port': 3306,
     'user': 'root',
     'password': 'admin',
@@ -116,7 +116,7 @@ def explore_database():
     except Exception as e:
         print(f"ERROR: {e}")
         print("\nTroubleshooting:")
-        print("1. Check network connectivity to s40vdsoxweb047")
+        print("1. Check network connectivity to s01vdsoxweb047")
         print("2. Verify credentials (root/admin)")
         print("3. Install MySQL driver: pip install pymysql")
 
