@@ -10,7 +10,9 @@ import json
 from pathlib import Path
 
 # Model configuration - update path after extraction
-MODEL_PATH = "models/gemma2-9b-it-v1/gemma-2-9b-it-Q4_K_M.gguf"
+# Common GGUF variants: Q4_0, Q4_K_M, Q5_K_M, Q8_0
+# Update this to match your actual file:
+MODEL_PATH = "models/gemma2-9b-it-v1/gemma-2-9b-it-Q5_K_M.gguf"
 
 def load_model():
     """Load Gemma 2 9B with GPU acceleration"""
