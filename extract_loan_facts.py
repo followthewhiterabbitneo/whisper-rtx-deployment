@@ -176,36 +176,24 @@ def create_underwriter_summary(loan_number):
     for i, rec in enumerate(recordings, 1):
         print(f"\nScanning recording {i}/{len(recordings)}: {rec['orkuid']}")
         
-        # Read transcript - try multiple path formats
+        # Read transcript using database path
         transcript_text = ""
+        path = rec['transcript_path']
         
-        # Build Windows path from orkuid and timestamp
-        date = rec['timestamp']
-        year = date.year
-        month = str(date.month).zfill(2)
-        day = str(date.day).zfill(2)
-        
-        # Try different path patterns
-        possible_paths = [
-            f"C:\\transcripts\\{year}\\{month}\\{day}\\{rec['orkuid']}.txt",
-            f"transcripts\\{year}\\{month}\\{day}\\{rec['orkuid']}.txt",
-            f"C:\\Users\\estillmane\\.aria\\whisper-rtx-deployment\\transcriptions\\{rec['orkuid']}.txt",
-            f"transcriptions\\{rec['orkuid']}.txt"
-        ]
-        
-        if rec['transcript_path']:
-            possible_paths.insert(0, rec['transcript_path'])
-            possible_paths.insert(1, rec['transcript_path'].replace('/', '\\'))
-        
-        for path in possible_paths:
-            if os.path.exists(path):
-                print(f"   Found transcript at: {path}")
-                with open(path, 'r', encoding='utf-8') as f:
+        if path:
+            # Convert to Windows path format if needed
+            if path.startswith('C:/'):
+                path = path.replace('/', '\\')
+            
+            try:
+                with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                     transcript_text = f.read()
-                break
-        
-        if not transcript_text:
-            print(f"   ⚠️  No transcript found for {rec['orkuid']}")
+                print(f"   ✓ Read transcript: {len(transcript_text)} characters")
+            except Exception as e:
+                print(f"   ⚠️  Error reading transcript: {e}")
+                continue
+        else:
+            print(f"   ⚠️  No transcript path in database for {rec['orkuid']}")
             continue
         
         # Process the transcript
