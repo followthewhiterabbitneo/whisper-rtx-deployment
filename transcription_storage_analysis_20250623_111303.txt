@@ -1,0 +1,12 @@
+TRANSCRIPTION STORAGE COST/BENEFIT ANALYSIS
+============================================================
+
+Generated: 2025-06-23 11:13:03.630887
+Calls per day: 30,000
+Daily storage requirement: 81.4 MB
+Yearly storage requirement: 29.0 GB
+
+RECOMMENDATION: Hybrid Approach
+- Store summaries and metadata in database
+- Store full transcripts in filesystem
+- Link via transcript_path field
