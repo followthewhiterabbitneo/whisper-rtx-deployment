@@ -13,21 +13,22 @@ from datetime import datetime
 def find_best_model():
     """Find the best available model that works with current llama-cpp-python"""
     model_paths = [
-        # Gemma 2 models (most compatible)
-        "models/gemma-2-9b-it-Q5_K_M.gguf",
-        "models/gemma2-9b-it-v1/gemma-2-9b-it-Q5_K_M.gguf",
-        "models/gemma-2-9b-it-Q4_K_M.gguf",
-        "models/gemma-2-2b-it-Q5_K_M.gguf",
+        # YOUR ACTUAL MODELS - in order of preference
+        # Llama 3 - MOST COMPATIBLE AND WILL WORK!
+        "C:/Users/estillmane/models/Llama-3-8B-Instruct-GGUF-Q4_K_M.gguf",
+        "../../models/Llama-3-8B-Instruct-GGUF-Q4_K_M.gguf",
         
-        # Llama 3 models (widely compatible)
-        "models/Llama-3-8B-Instruct-GGUF-Q4_K_M.gguf",
-        "models/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+        # Smaller Gemma models that might work
+        "C:/Users/estillmane/models/gemma3-1b-mortgage-v2.gguf",
+        "../../models/gemma3-1b-mortgage-v2.gguf",
+        "C:/Users/estillmane/models/gemma3-1b-mortgage.gguf",
+        "../../models/gemma3-1b-mortgage.gguf",
+        "C:/Users/estillmane/models/gemma3-1b.gguf",
+        "../../models/gemma3-1b.gguf",
+        "C:/Users/estillmane/models/nekoprb-gemma-2b.gguf",
+        "../../models/nekoprb-gemma-2b.gguf",
         
-        # Older Gemma formats
-        "models/gemma-7b-it-Q4_K_M.gguf",
-        "models/gemma-2b-it-Q5_K_M.gguf",
-        
-        # Try the gemma3 anyway in case it works
+        # The gemma3 12B (probably won't work but worth trying)
         "models/gemma-3-12b-it-qat-q4_0/gemma-3-12b-it-qat-q4_0.gguf"
     ]
     
