@@ -213,6 +213,19 @@ export const LoanTimelineView: React.FC = () => {
                             </span>
                           </div>
                           <p className="text-sm text-gray-700">{event.summary}</p>
+                          <div className="mt-2 flex gap-2">
+                            <a
+                              href={`/api/transcript/${event.orkuid}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              📄 View Transcript
+                            </a>
+                            <span className="text-xs text-gray-400">
+                              ID: {event.orkuid}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
