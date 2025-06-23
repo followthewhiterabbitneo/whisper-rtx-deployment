@@ -38,8 +38,7 @@ CREATE TABLE IF NOT EXISTS call_transcripts_v2 (
     updated_at TIMESTAMP NULL,
     
     INDEX idx_created (created_at),
-    INDEX idx_sentiment (sentiment),
-    FULLTEXT idx_summary (summary)
+    INDEX idx_sentiment (sentiment)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Hybrid storage for call transcriptions';
 """
 
@@ -116,14 +115,14 @@ try:
     # Test queries
     print("\nTesting queries...")
     
-    # Test 1: Full-text search
+    # Test 1: Summary search (using LIKE for MariaDB 5.5 InnoDB)
     cursor.execute("""
         SELECT orkuid, summary 
         FROM call_transcripts_v2 
-        WHERE MATCH(summary) AGAINST('payment' IN BOOLEAN MODE)
+        WHERE summary LIKE '%payment%'
     """)
     results = cursor.fetchall()
-    print(f"✓ Full-text search found {len(results)} results")
+    print(f"✓ Summary search found {len(results)} results")
     
     # Test 2: JSON search (using LIKE for MariaDB 5.5)
     cursor.execute("""
