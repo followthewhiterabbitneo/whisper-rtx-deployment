@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS call_transcripts_v2 (
     whisper_model VARCHAR(50) DEFAULT 'large-v3-turbo',
     summary_model VARCHAR(50) DEFAULT 'gemma-3-12b',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL,
     
     INDEX idx_created (created_at),
     INDEX idx_sentiment (sentiment),
