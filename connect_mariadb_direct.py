@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Direct MariaDB connection to s01vdsoxweb047
+Direct MariaDB connection to s40vpsoxweb002
 For use on RTX 4090 or any machine that can reach the database
 """
 
@@ -14,7 +14,7 @@ print("=" * 60)
 
 # Database configuration
 DB_CONFIG = {
-    'host': 's01vdsoxweb047',
+    'host': 's40vpsoxweb002',
     'port': 3306,
     'user': 'root',
     'password': 'admin',
@@ -164,7 +164,7 @@ except pymysql.Error as e:
     print(f"\n✗ Database connection failed!")
     print(f"Error: {e}")
     print("\nTroubleshooting:")
-    print("1. Check if you can reach s01vdsoxweb047 from your machine")
+    print("1. Check if you can reach s40vpsoxweb002 from your machine")
     print("2. Verify firewall allows port 3306")
     print("3. Confirm credentials are correct")
     print("4. You may need to run this from the RTX 4090 workstation")

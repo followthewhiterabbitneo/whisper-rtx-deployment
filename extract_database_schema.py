@@ -15,7 +15,7 @@ print("=" * 80)
 
 # Database configuration
 DB_CONFIG = {
-    'host': 's01vdsoxweb047',
+    'host': 's40vpsoxweb002',
     'port': 3306,
     'user': 'root',
     'password': 'admin',
@@ -285,7 +285,7 @@ try:
 except pymysql.Error as e:
     print(f"\n❌ Database connection failed!")
     print(f"Error: {e}")
-    print("\nThis script needs to be run from a machine that can reach s01vdsoxweb047")
+    print("\nThis script needs to be run from a machine that can reach s40vpsoxweb002")
     
 except Exception as e:
     print(f"\n❌ Unexpected error: {e}")

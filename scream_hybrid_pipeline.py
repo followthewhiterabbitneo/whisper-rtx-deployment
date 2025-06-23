@@ -21,7 +21,7 @@ print("=" * 80)
 
 # Configuration
 DB_CONFIG = {
-    'host': 's01vdsoxweb047',
+    'host': 's40vpsoxweb002',
     'port': 3306,
     'user': 'root',
     'password': 'admin',

@@ -15,7 +15,7 @@ print("=" * 60)
 # Configuration
 SSH_USER = "estillmane"
 SSH_HOST = "s40vpsoxweb002"
-DB_HOST = "s01vdsoxweb047"
+DB_HOST = "s40vpsoxweb002"
 DB_USER = "root"
 DB_PASS = "admin"
 DB_NAME = "oreka"

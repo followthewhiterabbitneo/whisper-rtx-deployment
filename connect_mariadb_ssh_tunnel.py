@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Connect to MariaDB via SSH tunnel
-This works when you can't directly reach s01vdsoxweb047
+This works when you can't directly reach s40vpsoxweb002
 """
 
 import subprocess
@@ -18,7 +18,7 @@ print("=" * 60)
 # Configuration
 SSH_USER = "estillmane"
 SSH_HOST = "s40vpsoxweb002"
-DB_HOST = "s01vdsoxweb047"
+DB_HOST = "s40vpsoxweb002"
 DB_PORT = 3306
 LOCAL_PORT = 33306  # Local port for tunnel
 
@@ -151,5 +151,5 @@ finally:
     print("✓ SSH tunnel closed")
 
 print("\n" + "=" * 60)
-print("Use connect_mariadb_direct.py if you can reach s01vdsoxweb047 directly")
+print("Use connect_mariadb_direct.py if you can reach s40vpsoxweb002 directly")
 print("=" * 60)

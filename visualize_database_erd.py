@@ -15,7 +15,7 @@ print("=" * 80)
 
 # Database configuration
 DB_CONFIG = {
-    'host': 's01vdsoxweb047',
+    'host': 's40vpsoxweb002',
     'port': 3306,
     'user': 'root',
     'password': 'admin',
@@ -241,7 +241,7 @@ try:
     
 except pymysql.Error as e:
     print(f"\n❌ Database error: {e}")
-    print("\nMake sure to run this from a machine that can reach s01vdsoxweb047")
+    print("\nMake sure to run this from a machine that can reach s40vpsoxweb002")
     
 except ImportError:
     print("\n❌ Missing dependency: graphviz")
