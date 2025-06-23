@@ -185,43 +185,51 @@
         }
         
         async function toggleTranscript(orkuid, index) {
-            const transcriptDiv = document.getElementById(`transcript-${index}`);
-            
-            if (transcriptDiv.style.display === 'block') {
-                transcriptDiv.style.display = 'none';
-                return;
-            }
-            
-            if (transcriptCache[orkuid]) {
-                transcriptDiv.innerHTML = `<pre>${transcriptCache[orkuid]}</pre>`;
-                transcriptDiv.style.display = 'block';
-                return;
-            }
-            
-            transcriptDiv.innerHTML = '<div class="loading">Loading transcript...</div>';
-            transcriptDiv.style.display = 'block';
-            
+            // First, we need to get the actual transcript path from the database
             try {
-                // For now, show a message about where transcripts are
-                const transcriptPath = `C:\\transcripts\\${orkuid}.txt`;
-                transcriptDiv.innerHTML = `
-                    <div>
-                        <strong>Transcript Location:</strong><br>
-                        ${transcriptPath}<br><br>
-                        <em>To view full transcript, open the file at the path above.</em>
-                    </div>
-                `;
-                
-                // If you add the transcript endpoint to your API, uncomment this:
-                /*
-                const response = await fetch(`http://localhost:8000/transcript/${orkuid}`);
+                const response = await fetch(`http://localhost:8000/calls/${orkuid}`);
                 const data = await response.json();
-                transcriptCache[orkuid] = data.content;
-                transcriptDiv.innerHTML = `<pre>${data.content}</pre>`;
-                */
+                
+                if (data.transcript_path) {
+                    // Create a link that opens the file
+                    const transcriptDiv = document.getElementById(`transcript-${index}`);
+                    
+                    // Windows path format
+                    let fullPath = data.transcript_path;
+                    if (fullPath.startsWith('C:/')) {
+                        fullPath = fullPath.replace(/\//g, '\\');
+                    }
+                    
+                    transcriptDiv.innerHTML = `
+                        <div style="margin-top: 10px;">
+                            <strong>Transcript Path:</strong><br>
+                            <code>${fullPath}</code><br><br>
+                            <em>Copy this path and paste into Windows Explorer or Run dialog (Win+R)</em>
+                        </div>
+                    `;
+                    transcriptDiv.style.display = 'block';
+                    
+                    // Copy path to clipboard
+                    navigator.clipboard.writeText(fullPath).then(() => {
+                        alert(`Path copied to clipboard!\n\n${fullPath}\n\nPress Win+R and paste to open folder.`);
+                    });
+                    
+                } else {
+                    alert('Transcript path not found in database');
+                }
                 
             } catch (error) {
-                transcriptDiv.innerHTML = `<div class="error">Failed to load transcript</div>`;
+                // If the endpoint doesn't exist, try to build the path
+                const date = new Date(document.querySelector(`#transcript-${index}`).closest('.call').dataset.timestamp);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                
+                const transcriptPath = `C:\\transcripts\\${year}\\${month}\\${day}\\${orkuid}.txt`;
+                
+                navigator.clipboard.writeText(transcriptPath).then(() => {
+                    alert(`Transcript path copied to clipboard!\n\n${transcriptPath}\n\nPress Win+R and paste to open.`);
+                });
             }
         }
         
