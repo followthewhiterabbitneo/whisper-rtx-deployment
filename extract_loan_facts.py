@@ -176,31 +176,50 @@ def create_underwriter_summary(loan_number):
     for i, rec in enumerate(recordings, 1):
         print(f"\nScanning recording {i}/{len(recordings)}: {rec['orkuid']}")
         
+        # Read transcript - try multiple path formats
         transcript_text = ""
         
-        # Read transcript
-        if rec['transcript_path'] and os.path.exists(rec['transcript_path']):
-            with open(rec['transcript_path'], 'r', encoding='utf-8') as f:
-                transcript_text = f.read()
-        elif rec['transcript_path']:
-            # Try Windows path
-            win_path = rec['transcript_path'].replace('/', '\\')
-            if os.path.exists(win_path):
-                with open(win_path, 'r', encoding='utf-8') as f:
-                    transcript_text = f.read()
+        # Build Windows path from orkuid and timestamp
+        date = rec['timestamp']
+        year = date.year
+        month = str(date.month).zfill(2)
+        day = str(date.day).zfill(2)
         
-        if transcript_text:
-            # Extract numbers
-            findings = extract_numbers(transcript_text)
-            for key, values in findings.items():
-                if isinstance(all_findings[key], set):
-                    all_findings[key].update(values)
-            
-            # Extract loan terms
-            terms = extract_loan_terms(transcript_text)
-            for key, value in terms.items():
-                if value and not all_findings['loan_terms'].get(key):
-                    all_findings['loan_terms'][key] = value
+        # Try different path patterns
+        possible_paths = [
+            f"C:\\transcripts\\{year}\\{month}\\{day}\\{rec['orkuid']}.txt",
+            f"transcripts\\{year}\\{month}\\{day}\\{rec['orkuid']}.txt",
+            f"C:\\Users\\estillmane\\.aria\\whisper-rtx-deployment\\transcriptions\\{rec['orkuid']}.txt",
+            f"transcriptions\\{rec['orkuid']}.txt"
+        ]
+        
+        if rec['transcript_path']:
+            possible_paths.insert(0, rec['transcript_path'])
+            possible_paths.insert(1, rec['transcript_path'].replace('/', '\\'))
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                print(f"   Found transcript at: {path}")
+                with open(path, 'r', encoding='utf-8') as f:
+                    transcript_text = f.read()
+                break
+        
+        if not transcript_text:
+            print(f"   ⚠️  No transcript found for {rec['orkuid']}")
+            continue
+        
+        # Process the transcript
+        # Extract numbers
+        findings = extract_numbers(transcript_text)
+        for key, values in findings.items():
+            if isinstance(all_findings[key], set):
+                all_findings[key].update(values)
+        
+        # Extract loan terms
+        terms = extract_loan_terms(transcript_text)
+        for key, value in terms.items():
+            if value and not all_findings['loan_terms'].get(key):
+                all_findings['loan_terms'][key] = value
     
     # Create underwriter fact sheet
     summary_file = f"loan_{loan_number}_FACTS.html"
@@ -477,12 +496,20 @@ def create_underwriter_summary(loan_number):
     print("\n📊 SUMMARY OF FINDINGS:")
     if all_findings['loan_amounts']:
         print(f"   Loan Amount: ${int(max(all_findings['loan_amounts'], key=lambda x: int(x))):,}")
+    else:
+        print("   Loan Amount: NOT FOUND")
     if all_findings['interest_rates']:
         print(f"   Interest Rate: {sorted(all_findings['interest_rates'])[0]}")
+    else:
+        print("   Interest Rate: NOT FOUND")
     if all_findings['payment_amounts']:
         print(f"   Monthly Payment: ${int(max(all_findings['payment_amounts'], key=lambda x: int(x))):,}")
+    else:
+        print("   Monthly Payment: NOT FOUND")
     if all_findings['credit_scores']:
         print(f"   Credit Score: {max(all_findings['credit_scores'])}")
+    else:
+        print("   Credit Score: NOT FOUND")
     
     # Try to open in browser
     try:
