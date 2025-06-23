@@ -91,7 +91,7 @@ def create_tables_if_needed():
             user_firstname VARCHAR(50),
             user_lastname VARCHAR(50),
             call_date DATE,
-            call_timestamp TIMESTAMP,
+            call_timestamp TIMESTAMP NULL,
             duration INT,
             confidence DECIMAL(3,2) DEFAULT 1.00,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
