@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loan Timeline Viewer</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .search-box {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        .summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .timeline {
+            margin: 20px 0;
+        }
+        .call {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: white;
+        }
+        .call:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .call-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        .call-date {
+            font-weight: bold;
+            color: #333;
+        }
+        .call-meta {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .sentiment {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .sentiment-neutral { background: #e9ecef; color: #495057; }
+        .sentiment-positive { background: #d4edda; color: #155724; }
+        .sentiment-negative { background: #f8d7da; color: #721c24; }
+        .transcript-preview {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+        }
+        .show-transcript {
+            color: #007bff;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .show-transcript:hover { text-decoration: underline; }
+        .loading { text-align: center; color: #666; }
+        .error { color: #dc3545; padding: 10px; background: #f8d7da; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Loan Timeline Viewer</h1>
+        
+        <div class="search-box">
+            <input type="text" id="loanNumber" placeholder="Enter loan number" value="1225290972">
+            <button onclick="loadTimeline()">Search</button>
+        </div>
+        
+        <div id="summary"></div>
+        <div id="timeline"></div>
+    </div>
+    
+    <script>
+        // Cache for transcripts
+        const transcriptCache = {};
+        
+        async function loadTimeline() {
+            const loanNumber = document.getElementById('loanNumber').value;
+            if (!loanNumber) return;
+            
+            document.getElementById('timeline').innerHTML = '<div class="loading">Loading timeline...</div>';
+            document.getElementById('summary').innerHTML = '';
+            
+            try {
+                const response = await fetch(`http://localhost:8001/timeline/${loanNumber}`);
+                if (!response.ok) throw new Error('Failed to load timeline');
+                
+                const data = await response.json();
+                
+                // Display summary
+                let summaryHtml = `
+                    <div class="summary">
+                        <h2>Loan #${data.loan_number}</h2>
+                        <p><strong>Primary User:</strong> ${data.primary_user || 'Unknown'}</p>
+                        <p><strong>Total Calls:</strong> ${data.total_calls} calls over ${data.total_duration_minutes} minutes</p>
+                        <p><strong>Date Range:</strong> ${new Date(data.first_contact).toLocaleDateString()} - ${new Date(data.last_contact).toLocaleDateString()}</p>
+                    </div>
+                `;
+                document.getElementById('summary').innerHTML = summaryHtml;
+                
+                // Display timeline
+                let timelineHtml = '<h3>Call Timeline</h3>';
+                
+                data.timeline_events.forEach((event, index) => {
+                    const date = new Date(event.timestamp);
+                    const dateStr = date.toLocaleDateString();
+                    const timeStr = date.toLocaleTimeString();
+                    const duration = Math.floor(event.duration / 60);
+                    
+                    timelineHtml += `
+                        <div class="call">
+                            <div class="call-header">
+                                <div>
+                                    <div class="call-date">${dateStr} at ${timeStr}</div>
+                                    <div class="call-meta">
+                                        <strong>${event.user_name || 'Unknown'}</strong> • 
+                                        ${duration} minute call • 
+                                        ID: ${event.orkuid}
+                                    </div>
+                                </div>
+                                <span class="sentiment sentiment-${event.sentiment}">${event.sentiment}</span>
+                            </div>
+                            <div class="call-meta">
+                                ${event.summary}
+                            </div>
+                            <div>
+                                <a class="show-transcript" onclick="toggleTranscript('${event.orkuid}', ${index})">
+                                    📄 View Full Transcript
+                                </a>
+                            </div>
+                            <div id="transcript-${index}" class="transcript-preview"></div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('timeline').innerHTML = timelineHtml;
+                
+            } catch (error) {
+                document.getElementById('timeline').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function toggleTranscript(orkuid, index) {
+            const transcriptDiv = document.getElementById(`transcript-${index}`);
+            
+            if (transcriptDiv.style.display === 'block') {
+                transcriptDiv.style.display = 'none';
+                return;
+            }
+            
+            if (transcriptCache[orkuid]) {
+                transcriptDiv.innerHTML = `<pre>${transcriptCache[orkuid]}</pre>`;
+                transcriptDiv.style.display = 'block';
+                return;
+            }
+            
+            transcriptDiv.innerHTML = '<div class="loading">Loading transcript...</div>';
+            transcriptDiv.style.display = 'block';
+            
+            try {
+                // For now, show a message about where transcripts are
+                const transcriptPath = `C:\\transcripts\\${orkuid}.txt`;
+                transcriptDiv.innerHTML = `
+                    <div>
+                        <strong>Transcript Location:</strong><br>
+                        ${transcriptPath}<br><br>
+                        <em>To view full transcript, open the file at the path above.</em>
+                    </div>
+                `;
+                
+                // If you add the transcript endpoint to your API, uncomment this:
+                /*
+                const response = await fetch(`http://localhost:8000/transcript/${orkuid}`);
+                const data = await response.json();
+                transcriptCache[orkuid] = data.content;
+                transcriptDiv.innerHTML = `<pre>${data.content}</pre>`;
+                */
+                
+            } catch (error) {
+                transcriptDiv.innerHTML = `<div class="error">Failed to load transcript</div>`;
+            }
+        }
+        
+        // Load on page load
+        window.onload = () => loadTimeline();
+    </script>
+</body>
+</html>
