@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enhanced Loan Timeline Viewer</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0;
+            padding: 0;
+            background: #f0f2f5;
+            color: #1a1a1a;
+        }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e1e4e8;
+            padding: 1rem 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0969da;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+        .search-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #e1e4e8;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #0969da;
+        }
+        button {
+            padding: 12px 24px;
+            background: #0969da;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        button:hover { 
+            background: #0860ca; 
+        }
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 8px 16px;
+            background: #f6f8fa;
+            color: #24292e;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: #f0f2f5;
+            border-color: #d1d5da;
+        }
+        .action-btn.primary {
+            background: #2ea043;
+            color: white;
+            border-color: #2ea043;
+        }
+        .action-btn.primary:hover {
+            background: #2c974b;
+        }
+        .summary {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #24292e;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .stat-card {
+            background: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e1e4e8;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #586069;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #24292e;
+            margin-top: 4px;
+        }
+        .timeline {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .timeline h3 {
+            margin-top: 0;
+            color: #24292e;
+        }
+        .call {
+            border: 1px solid #e1e4e8;
+            margin: 1rem 0;
+            padding: 1.5rem;
+            border-radius: 6px;
+            background: white;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .call:hover {
+            border-color: #d1d5da;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .call-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        .call-date {
+            font-weight: 600;
+            color: #24292e;
+            font-size: 16px;
+        }
+        .call-meta {
+            color: #586069;
+            font-size: 14px;
+            margin: 0.5rem 0;
+            line-height: 1.5;
+        }
+        .sentiment {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .sentiment-neutral { 
+            background: #f6f8fa; 
+            color: #586069; 
+        }
+        .sentiment-positive { 
+            background: #dafbe1; 
+            color: #116329; 
+        }
+        .sentiment-negative { 
+            background: #ffebe9; 
+            color: #cf222e; 
+        }
+        .call-summary {
+            background: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .transcript-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .transcript-btn {
+            padding: 6px 12px;
+            background: white;
+            color: #0969da;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .transcript-btn:hover {
+            background: #f6f8fa;
+            border-color: #0969da;
+        }
+        .transcript-preview {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f6f8fa;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e1e4e8;
+        }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #586069;
+        }
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            border: 2px solid #e1e4e8;
+            border-top-color: #0969da;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error {
+            color: #cf222e;
+            padding: 1rem;
+            background: #ffebe9;
+            border-radius: 6px;
+            border: 1px solid #ff8182;
+        }
+        .insights-panel {
+            background: #fffbdd;
+            border: 1px solid #d4a72c;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        .insights-panel h4 {
+            margin-top: 0;
+            color: #735c0f;
+        }
+        .insight-item {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        .insight-item::before {
+            content: '•';
+            position: absolute;
+            left: 0.5rem;
+            color: #d4a72c;
+        }
+        .milestones {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .milestone {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f6f8fa;
+            border-radius: 6px;
+            border-left: 3px solid #0969da;
+        }
+        .milestone-date {
+            font-weight: 600;
+            color: #0969da;
+            white-space: nowrap;
+        }
+        .milestone-content {
+            flex: 1;
+        }
+        .milestone-type {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e1e4e8;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        #insights {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🔍 Loan Timeline System</div>
+            <div id="api-status" style="font-size: 14px; color: #586069;">
+                API Status: <span id="api-status-text">Checking...</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="search-section">
+            <h1 style="margin-top: 0;">Search Loan Timeline</h1>
+            <div class="search-box">
+                <input type="text" id="loanNumber" placeholder="Enter loan number (e.g., 1225290972)" value="1225290972">
+                <button onclick="loadTimeline()">Search Timeline</button>
+            </div>
+            
+            <div class="actions" id="actions" style="display: none;">
+                <a href="#" class="action-btn primary" onclick="generateSummary(); return false;">
+                    📊 Generate Full Summary
+                </a>
+                <a href="#" class="action-btn" onclick="exportTimeline('csv'); return false;">
+                    📥 Export CSV
+                </a>
+                <a href="#" class="action-btn" onclick="openAllTranscripts(); return false;">
+                    📂 Open All Transcripts
+                </a>
+                <a href="#" class="action-btn" onclick="toggleInsights(); return false;">
+                    💡 Show AI Insights
+                </a>
+            </div>
+        </div>
+        
+        <div id="summary" style="display: none;"></div>
+        <div id="milestones" style="display: none;"></div>
+        <div id="insights" class="insights-panel"></div>
+        <div id="timeline"></div>
+    </div>
+    
+    <script>
+        // Cache for transcripts and data
+        const cache = {
+            timeline: null,
+            insights: null,
+            transcripts: {}
+        };
+        
+        // Check API status on load
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('http://localhost:8001/timeline/1225290972');
+                if (response.ok) {
+                    document.getElementById('api-status-text').textContent = '✅ Connected';
+                    document.getElementById('api-status-text').style.color = '#2ea043';
+                }
+            } catch (error) {
+                document.getElementById('api-status-text').textContent = '❌ Not Connected';
+                document.getElementById('api-status-text').style.color = '#cf222e';
+            }
+        }
+        
+        async function loadTimeline() {
+            const loanNumber = document.getElementById('loanNumber').value;
+            if (!loanNumber) return;
+            
+            document.getElementById('timeline').innerHTML = '<div class="loading">Loading timeline...</div>';
+            document.getElementById('summary').style.display = 'none';
+            document.getElementById('milestones').style.display = 'none';
+            document.getElementById('insights').style.display = 'none';
+            document.getElementById('actions').style.display = 'none';
+            
+            try {
+                const response = await fetch(`http://localhost:8001/timeline/${loanNumber}`);
+                if (!response.ok) throw new Error('Failed to load timeline');
+                
+                const data = await response.json();
+                cache.timeline = data;
+                
+                // Show actions
+                document.getElementById('actions').style.display = 'flex';
+                
+                // Display summary
+                displaySummary(data);
+                
+                // Display milestones if any
+                if (data.key_milestones && data.key_milestones.length > 0) {
+                    displayMilestones(data.key_milestones);
+                }
+                
+                // Display timeline
+                displayTimeline(data);
+                
+            } catch (error) {
+                document.getElementById('timeline').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        function displaySummary(data) {
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.style.display = 'block';
+            
+            const duration = data.timeline_events.reduce((sum, e) => sum + e.duration, 0);
+            const avgDuration = Math.round(duration / data.timeline_events.length / 60);
+            
+            summaryDiv.innerHTML = `
+                <div class="summary">
+                    <h2>Loan #${data.loan_number} Overview</h2>
+                    
+                    <div class="summary-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Calls</div>
+                            <div class="stat-value">${data.total_calls}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Duration</div>
+                            <div class="stat-value">${data.total_duration_minutes}m</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Date Range</div>
+                            <div class="stat-value">${new Date(data.first_contact).toLocaleDateString()} - ${new Date(data.last_contact).toLocaleDateString()}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Primary Contact</div>
+                            <div class="stat-value">${data.primary_user || 'Unknown'}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avg Call Length</div>
+                            <div class="stat-value">${avgDuration}m</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Sentiment Score</div>
+                            <div class="stat-value">${getSentimentScore(data.sentiment_trend)}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: #f6f8fa; border-radius: 6px;">
+                        <strong>Summary:</strong> ${data.aggregated_summary}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function displayMilestones(milestones) {
+            const milestonesDiv = document.getElementById('milestones');
+            milestonesDiv.style.display = 'block';
+            
+            let html = '<div class="milestones"><h3>Key Milestones</h3>';
+            
+            milestones.forEach(milestone => {
+                const date = new Date(milestone.date);
+                const sentimentClass = milestone.sentiment ? `sentiment-${milestone.sentiment}` : '';
+                
+                html += `
+                    <div class="milestone">
+                        <div class="milestone-date">${date.toLocaleDateString()}</div>
+                        <div class="milestone-content">
+                            <span class="milestone-type">${milestone.type}</span>
+                            ${milestone.sentiment ? `<span class="sentiment ${sentimentClass}">${milestone.sentiment}</span>` : ''}
+                            <div style="margin-top: 0.5rem;">${milestone.description}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            milestonesDiv.innerHTML = html;
+        }
+        
+        function displayTimeline(data) {
+            let timelineHtml = '<div class="timeline"><h3>Complete Call Timeline</h3>';
+            
+            data.timeline_events.forEach((event, index) => {
+                const date = new Date(event.timestamp);
+                const dateStr = date.toLocaleDateString();
+                const timeStr = date.toLocaleTimeString();
+                const duration = Math.floor(event.duration / 60);
+                
+                timelineHtml += `
+                    <div class="call" data-timestamp="${event.timestamp}" data-orkuid="${event.orkuid}">
+                        <div class="call-header">
+                            <div>
+                                <div class="call-date">${dateStr} at ${timeStr}</div>
+                                <div class="call-meta">
+                                    <strong>${event.user_name || 'Unknown'}</strong> • 
+                                    ${duration} minute call • 
+                                    ID: ${event.orkuid}
+                                    ${event.loan_mentions > 0 ? ` • Loan mentioned ${event.loan_mentions} time${event.loan_mentions > 1 ? 's' : ''}` : ''}
+                                </div>
+                            </div>
+                            <span class="sentiment sentiment-${event.sentiment || 'neutral'}">${event.sentiment || 'neutral'}</span>
+                        </div>
+                        
+                        <div class="call-summary">
+                            ${event.summary}
+                        </div>
+                        
+                        ${Object.keys(event.key_facts || {}).length > 0 ? `
+                            <div class="call-meta" style="margin-top: 0.5rem;">
+                                <strong>Key Facts:</strong> ${Object.entries(event.key_facts).map(([k,v]) => `${k}: ${v}`).join(' • ')}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="transcript-actions">
+                            <a class="transcript-btn" onclick="viewTranscript('${event.orkuid}', ${index}, '${event.timestamp}')">
+                                📄 View Transcript
+                            </a>
+                            <a class="transcript-btn" onclick="copyTranscriptPath('${event.orkuid}', '${event.timestamp}')">
+                                📋 Copy Path
+                            </a>
+                        </div>
+                        <div id="transcript-${index}" class="transcript-preview"></div>
+                    </div>
+                `;
+            });
+            
+            timelineHtml += '</div>';
+            document.getElementById('timeline').innerHTML = timelineHtml;
+        }
+        
+        function getSentimentScore(sentimentTrend) {
+            const positive = sentimentTrend.positive || 0;
+            const negative = sentimentTrend.negative || 0;
+            const neutral = sentimentTrend.neutral || 0;
+            
+            if (positive > negative) {
+                return `${Math.round(positive / (positive + negative + neutral) * 100)}% Positive`;
+            } else if (negative > positive) {
+                return `${Math.round(negative / (positive + negative + neutral) * 100)}% Negative`;
+            } else {
+                return 'Neutral';
+            }
+        }
+        
+        async function viewTranscript(orkuid, index, timestamp) {
+            const transcriptDiv = document.getElementById(`transcript-${index}`);
+            
+            if (transcriptDiv.style.display === 'block') {
+                transcriptDiv.style.display = 'none';
+                return;
+            }
+            
+            if (cache.transcripts[orkuid]) {
+                transcriptDiv.innerHTML = `<pre>${cache.transcripts[orkuid]}</pre>`;
+                transcriptDiv.style.display = 'block';
+                return;
+            }
+            
+            transcriptDiv.innerHTML = '<div class="loading">Loading transcript...</div>';
+            transcriptDiv.style.display = 'block';
+            
+            try {
+                // Build transcript path
+                const date = new Date(timestamp);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const transcriptPath = `C:\\transcripts\\${year}\\${month}\\${day}\\${orkuid}.txt`;
+                
+                transcriptDiv.innerHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <strong>Transcript Path:</strong><br>
+                        <code style="background: #f6f8fa; padding: 0.5rem; display: block; margin: 0.5rem 0; border-radius: 4px;">${transcriptPath}</code>
+                        <em style="color: #586069; font-size: 13px;">Copy this path and open in Notepad or any text editor</em>
+                    </div>
+                    <div style="background: #fffbdd; border: 1px solid #d4a72c; padding: 1rem; border-radius: 6px;">
+                        <strong>Note:</strong> Full transcript text would appear here if the file was accessible from the browser. 
+                        Use the "Copy Path" button to get the file location and open it locally.
+                    </div>
+                `;
+                
+                // Cache empty for now
+                cache.transcripts[orkuid] = 'Transcript preview not available - please open the file locally';
+                
+            } catch (error) {
+                transcriptDiv.innerHTML = `<div class="error">Error loading transcript: ${error.message}</div>`;
+            }
+        }
+        
+        function copyTranscriptPath(orkuid, timestamp) {
+            const date = new Date(timestamp);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const transcriptPath = `C:\\transcripts\\${year}\\${month}\\${day}\\${orkuid}.txt`;
+            
+            navigator.clipboard.writeText(transcriptPath).then(() => {
+                alert(`Transcript path copied to clipboard!\n\n${transcriptPath}\n\nPress Win+R and paste to open folder.`);
+            }).catch(err => {
+                alert(`Path: ${transcriptPath}\n\nPlease copy this manually.`);
+            });
+        }
+        
+        async function generateSummary() {
+            const loanNumber = document.getElementById('loanNumber').value;
+            if (!loanNumber) return;
+            
+            const summaryFile = `loan_${loanNumber}_SUMMARY.html`;
+            alert(`To generate a comprehensive summary:\n\n1. Run: python summarize_loan_story.py\n2. Enter loan number: ${loanNumber}\n3. Open the generated file: ${summaryFile}`);
+        }
+        
+        async function exportTimeline(format) {
+            if (!cache.timeline) return;
+            
+            const response = await fetch(`http://localhost:8001/timeline/${cache.timeline.loan_number}/export?format=${format}`);
+            const data = await response.json();
+            
+            if (format === 'csv') {
+                const blob = new Blob([data.content], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = data.filename;
+                a.click();
+            }
+        }
+        
+        function openAllTranscripts() {
+            const loanNumber = document.getElementById('loanNumber').value;
+            if (!loanNumber) return;
+            
+            alert(`To open all transcripts:\n\n1. Run: python open_transcripts.py\n2. Enter loan number: ${loanNumber}\n3. Double-click the generated batch file: open_loan_${loanNumber}_transcripts.bat`);
+        }
+        
+        async function toggleInsights() {
+            const insightsDiv = document.getElementById('insights');
+            
+            if (insightsDiv.style.display === 'block') {
+                insightsDiv.style.display = 'none';
+                return;
+            }
+            
+            if (cache.insights) {
+                displayInsights(cache.insights);
+                return;
+            }
+            
+            insightsDiv.innerHTML = '<div class="loading">Loading AI insights...</div>';
+            insightsDiv.style.display = 'block';
+            
+            try {
+                const loanNumber = document.getElementById('loanNumber').value;
+                const response = await fetch(`http://localhost:8001/insights/${loanNumber}`);
+                const insights = await response.json();
+                cache.insights = insights;
+                displayInsights(insights);
+            } catch (error) {
+                insightsDiv.innerHTML = `<div class="error">Error loading insights: ${error.message}</div>`;
+            }
+        }
+        
+        function displayInsights(insights) {
+            const insightsDiv = document.getElementById('insights');
+            
+            let html = `
+                <h4>🤖 AI-Powered Insights</h4>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Loan Status:</strong> <span style="font-weight: 600; color: ${getStatusColor(insights.loan_status)}">${insights.loan_status}</span>
+                </div>
+            `;
+            
+            if (insights.key_issues.length > 0) {
+                html += '<div style="margin-bottom: 1rem;"><strong>Key Issues:</strong>';
+                insights.key_issues.forEach(issue => {
+                    html += `<div class="insight-item">${issue}</div>`;
+                });
+                html += '</div>';
+            }
+            
+            if (insights.action_items.length > 0) {
+                html += '<div style="margin-bottom: 1rem;"><strong>Action Items:</strong>';
+                insights.action_items.forEach(item => {
+                    html += `<div class="insight-item">${item}</div>`;
+                });
+                html += '</div>';
+            }
+            
+            if (insights.risk_indicators.length > 0) {
+                html += '<div style="margin-bottom: 1rem;"><strong>Risk Indicators:</strong>';
+                insights.risk_indicators.forEach(risk => {
+                    html += `<div class="insight-item" style="color: #cf222e;">${risk}</div>`;
+                });
+                html += '</div>';
+            }
+            
+            insightsDiv.innerHTML = html;
+            insightsDiv.style.display = 'block';
+        }
+        
+        function getStatusColor(status) {
+            switch(status.toLowerCase()) {
+                case 'active': return '#0969da';
+                case 'resolved': return '#2ea043';
+                case 'at risk': return '#d4a72c';
+                case 'denied': return '#cf222e';
+                default: return '#586069';
+            }
+        }
+        
+        // Auto-search if loan number is provided
+        window.onload = () => {
+            checkApiStatus();
+            if (document.getElementById('loanNumber').value) {
+                loadTimeline();
+            }
+        };
+    </script>
+</body>
+</html>
