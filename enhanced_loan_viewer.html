@@ -344,6 +344,9 @@
                 <a href="#" class="action-btn primary" onclick="generateSummary(); return false;">
                     📊 Generate Full Summary
                 </a>
+                <a href="#" class="action-btn" onclick="extractFacts(); return false;" style="background: #e74c3c; color: white; border-color: #e74c3c;">
+                    💰 Extract Loan Facts
+                </a>
                 <a href="#" class="action-btn" onclick="exportTimeline('csv'); return false;">
                     📥 Export CSV
                 </a>
@@ -644,6 +647,13 @@
             if (!loanNumber) return;
             
             alert(`To open all transcripts:\n\n1. Run: python open_transcripts.py\n2. Enter loan number: ${loanNumber}\n3. Double-click the generated batch file: open_loan_${loanNumber}_transcripts.bat`);
+        }
+        
+        function extractFacts() {
+            const loanNumber = document.getElementById('loanNumber').value;
+            if (!loanNumber) return;
+            
+            alert(`To extract REAL LOAN FACTS (amounts, rates, dates):\n\n1. Run: python extract_loan_facts.py\n2. Enter loan number: ${loanNumber}\n3. Get actual numbers for underwriting!\n\nExtracts: loan amounts, interest rates, payments, credit scores, income, LTV, DTI, and more!`);
         }
         
         async function toggleInsights() {
