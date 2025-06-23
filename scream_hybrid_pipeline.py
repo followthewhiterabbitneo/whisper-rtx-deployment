@@ -223,8 +223,8 @@ Legal Brief Summary:<end_of_turn>
             orkuid,
             summary,
             transcript_path,
-            json.dumps(loan_numbers),
-            json.dumps(key_facts),
+            json.dumps(loan_numbers),  # Convert list to JSON string
+            json.dumps(key_facts),     # Convert dict to JSON string
             sentiment,
             int(processing_time),
             'large-v3-turbo',

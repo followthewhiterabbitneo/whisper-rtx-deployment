@@ -166,6 +166,23 @@ class BatchProcessor:
         """Process recordings for a specific user"""
         print(f"\nSearching for {firstname} {lastname} recordings...")
         
+        # First check if the user exists
+        check_user_query = """
+        SELECT DISTINCT u.uid, u.firstname, u.lastname 
+        FROM orkuser u
+        WHERE u.firstname LIKE %s OR u.lastname LIKE %s
+        LIMIT 10
+        """
+        
+        cursor = self.pipeline.cursor
+        cursor.execute(check_user_query, (f'%{firstname}%', f'%{lastname}%'))
+        users = cursor.fetchall()
+        
+        if users:
+            print(f"\nFound users matching '{firstname}' or '{lastname}':")
+            for user in users:
+                print(f"  - {user['firstname']} {user['lastname']} (uid: {user['uid']})")
+        
         query = """
         SELECT 
             t.uid as orkuid,
