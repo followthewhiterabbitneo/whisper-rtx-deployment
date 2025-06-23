@@ -425,12 +425,39 @@ def create_underwriter_summary(loan_number):
         <div style="margin-top: 40px; padding: 20px; background: #e8f4fd; border-radius: 5px;">
             <h3>🎯 UNDERWRITER ACTION ITEMS</h3>
             <ol>
-                <li>Verify loan amount: ${int(loan_amt):,} if all_findings['loan_amounts'] else 'NOT FOUND'}</li>
-                <li>Confirm interest rate: {sorted(all_findings['interest_rates'])[0] if all_findings['interest_rates'] else 'NOT FOUND'}</li>
-                <li>Validate monthly payment: ${int(payment):,} if all_findings['payment_amounts'] else 'NOT FOUND'}</li>
-                <li>Check credit score: {max(all_findings['credit_scores']) if all_findings['credit_scores'] else 'NOT FOUND'}</li>
-                <li>Review income documentation{' - amounts found: ' + ', '.join([f'${int(x):,}' for x in sorted(all_findings['income_amounts'], key=lambda x: int(x), reverse=True)[:3]]) if all_findings['income_amounts'] else ' - NO AMOUNTS FOUND'}</li>
-            </ol>
+""")
+        
+        # Build action items dynamically to avoid f-string issues
+        if all_findings['loan_amounts']:
+            loan_amt = max(all_findings['loan_amounts'], key=lambda x: int(x))
+            f.write(f"                <li>Verify loan amount: ${int(loan_amt):,}</li>\n")
+        else:
+            f.write("                <li>Verify loan amount: NOT FOUND</li>\n")
+            
+        if all_findings['interest_rates']:
+            f.write(f"                <li>Confirm interest rate: {sorted(all_findings['interest_rates'])[0]}</li>\n")
+        else:
+            f.write("                <li>Confirm interest rate: NOT FOUND</li>\n")
+            
+        if all_findings['payment_amounts']:
+            payment = max(all_findings['payment_amounts'], key=lambda x: int(x))
+            f.write(f"                <li>Validate monthly payment: ${int(payment):,}</li>\n")
+        else:
+            f.write("                <li>Validate monthly payment: NOT FOUND</li>\n")
+            
+        if all_findings['credit_scores']:
+            f.write(f"                <li>Check credit score: {max(all_findings['credit_scores'])}</li>\n")
+        else:
+            f.write("                <li>Check credit score: NOT FOUND</li>\n")
+            
+        if all_findings['income_amounts']:
+            income_list = sorted(all_findings['income_amounts'], key=lambda x: int(x), reverse=True)[:3]
+            income_str = ', '.join([f'${int(x):,}' for x in income_list])
+            f.write(f"                <li>Review income documentation - amounts found: {income_str}</li>\n")
+        else:
+            f.write("                <li>Review income documentation - NO AMOUNTS FOUND</li>\n")
+            
+        f.write("""            </ol>
         </div>
         
         <div style="margin-top: 30px; text-align: center;">
