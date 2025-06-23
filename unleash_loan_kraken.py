@@ -465,10 +465,12 @@ Parties: {rec['localParty']} / {rec['remoteParty']}
 """)
             
             if summary['ai_summary']:
+                # Format the summary outside f-string to avoid backslash issues
+                formatted_summary = summary['ai_summary'].replace('\n', '<br>')
                 f.write(f"""
             <div class="legal-brief">
                 <h3>AI-Generated Legal Brief</h3>
-                {summary['ai_summary'].replace('\n', '<br>')}
+                {formatted_summary}
             </div>
 """)
             else:
