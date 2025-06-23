@@ -46,7 +46,7 @@ TRANSCRIPT:
 {transcript[:10000]}
 <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
 
-def test_gpu_loading():
+def test_gpu_loading(model_path):
     """Test if GPU is actually being used"""
     print("\n🔍 GPU VERIFICATION TEST")
     print("-" * 60)
@@ -61,7 +61,7 @@ def test_gpu_loading():
         print("\nAttempting GPU load with n_gpu_layers=-1...")
         
         llm = Llama(
-            model_path=MODEL_PATH,
+            model_path=model_path,
             n_gpu_layers=-1,      # All layers on GPU
             n_ctx=8192,
             n_batch=512,
@@ -90,7 +90,7 @@ def test_gpu_loading():
         
         try:
             llm = Llama(
-                model_path=MODEL_PATH,
+                model_path=model_path,
                 n_gpu_layers=0,       # Force CPU
                 n_ctx=4096,          # Smaller context for CPU
                 n_threads=16,        # More threads for CPU
@@ -115,21 +115,21 @@ def main():
     
     transcript_path = sys.argv[1].strip('"')
     
-    # Check if model exists
-    if not os.path.exists(MODEL_PATH):
+    # Check if model exists and determine path
+    model_path = MODEL_PATH
+    if not os.path.exists(model_path):
         alt_path = "../../models/Llama-3-8B-Instruct-GGUF-Q4_K_M.gguf"
         if os.path.exists(alt_path):
-            global MODEL_PATH
-            MODEL_PATH = alt_path
+            model_path = alt_path
         else:
-            print(f"❌ Model not found!")
+            print(f"❌ Model not found at {MODEL_PATH} or {alt_path}!")
             return
     
-    print(f"📂 Model: {MODEL_PATH}")
+    print(f"📂 Model: {model_path}")
     print(f"📄 Transcript: {transcript_path}")
     
     # Test GPU loading
-    llm, using_gpu = test_gpu_loading()
+    llm, using_gpu = test_gpu_loading(model_path)
     if not llm:
         return
     
