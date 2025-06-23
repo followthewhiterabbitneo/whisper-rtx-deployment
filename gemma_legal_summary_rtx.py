@@ -221,6 +221,10 @@ def generate_summary(transcript_path):
         
         # Also create HTML version
         html_file = output_dir / f"{base_name}_legal_summary.html"
+        
+        # Format summary for HTML outside f-string
+        html_summary = summary.replace('**', '<strong>').replace('\n', '<br>\n')
+        
         with open(html_file, 'w', encoding='utf-8') as f:
             f.write(f"""<!DOCTYPE html>
 <html>
@@ -241,7 +245,7 @@ def generate_summary(transcript_path):
         Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}<br>
         Transcript: {Path(transcript_path).name}
     </div>
-    {summary.replace('**', '</strong>').replace('**', '<strong>').replace('\n', '<br>\n')}
+    {html_summary}
 </body>
 </html>""")
         
