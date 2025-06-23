@@ -166,45 +166,84 @@ class BatchProcessor:
         """Process recordings for a specific user"""
         print(f"\nSearching for {firstname} {lastname} recordings...")
         
-        # First check if the user exists
-        check_user_query = """
-        SELECT DISTINCT u.uid, u.firstname, u.lastname 
-        FROM orkuser u
-        WHERE u.firstname LIKE %s OR u.lastname LIKE %s
-        LIMIT 10
-        """
-        
-        cursor = self.pipeline.cursor
-        cursor.execute(check_user_query, (f'%{firstname}%', f'%{lastname}%'))
-        users = cursor.fetchall()
-        
-        if users:
-            print(f"\nFound users matching '{firstname}' or '{lastname}':")
-            for user in users:
-                print(f"  - {user['firstname']} {user['lastname']} (uid: {user['uid']})")
-        
-        query = """
-        SELECT 
-            t.uid as orkuid,
-            t.filename,
-            t.duration,
-            t.timestamp
-        FROM orktape t
-        LEFT JOIN call_transcripts_v2 ct ON t.uid = ct.orkuid
-        JOIN orksegment s ON t.uid = s.fktape
-        JOIN orkuser u ON s.fkuser = u.uid
-        WHERE 
-            ct.orkuid IS NULL
-            AND u.firstname = %s
-            AND u.lastname = %s
-            AND t.duration >= 120
-        ORDER BY t.timestamp DESC
-        LIMIT %s
-        """
-        
-        cursor = self.pipeline.cursor
-        cursor.execute(query, (firstname, lastname, self.limit))
-        recordings = cursor.fetchall()
+        try:
+            # First check if the user exists
+            check_user_query = """
+            SELECT DISTINCT u.uid, u.firstname, u.lastname 
+            FROM orkuser u
+            WHERE u.firstname LIKE %s OR u.lastname LIKE %s
+            LIMIT 10
+            """
+            
+            cursor = self.pipeline.cursor
+            cursor.execute(check_user_query, (f'%{firstname}%', f'%{lastname}%'))
+            users = cursor.fetchall()
+            
+            if users:
+                print(f"\nFound users matching '{firstname}' or '{lastname}':")
+                for user in users:
+                    print(f"  - {user['firstname']} {user['lastname']} (uid: {user['uid']})")
+            else:
+                print(f"\nNo users found matching '{firstname}' or '{lastname}'")
+                
+                # Let's check the orktape table directly for parties
+                print("\nChecking recordings with party names...")
+                party_query = """
+                SELECT DISTINCT localparty, remoteparty 
+                FROM orktape 
+                WHERE localparty LIKE %s OR localparty LIKE %s 
+                   OR remoteparty LIKE %s OR remoteparty LIKE %s
+                LIMIT 10
+                """
+                cursor.execute(party_query, (f'%{firstname}%', f'%{lastname}%', f'%{firstname}%', f'%{lastname}%'))
+                parties = cursor.fetchall()
+                
+                if parties:
+                    print("\nFound party names:")
+                    for party in parties:
+                        print(f"  Local: {party['localparty']} | Remote: {party['remoteparty']}")
+            
+            query = """
+            SELECT 
+                t.uid as orkuid,
+                t.filename,
+                t.duration,
+                t.timestamp,
+                t.localparty,
+                t.remoteparty
+            FROM orktape t
+            LEFT JOIN call_transcripts_v2 ct ON t.uid = ct.orkuid
+            LEFT JOIN orksegment s ON t.uid = s.fktape
+            LEFT JOIN orkuser u ON s.fkuser = u.uid
+            WHERE 
+                ct.orkuid IS NULL
+                AND (
+                    (u.firstname = %s AND u.lastname = %s)
+                    OR t.localparty LIKE %s 
+                    OR t.localparty LIKE %s
+                    OR t.remoteparty LIKE %s
+                    OR t.remoteparty LIKE %s
+                )
+                AND t.duration >= 120
+            ORDER BY t.timestamp DESC
+            LIMIT %s
+            """
+            
+            cursor = self.pipeline.cursor
+            full_name_pattern = f'%{firstname}%{lastname}%'
+            cursor.execute(query, (
+                firstname, lastname, 
+                f'%{firstname}%', f'%{lastname}%',
+                f'%{firstname}%', f'%{lastname}%',
+                self.limit
+            ))
+            recordings = cursor.fetchall()
+            
+        except Exception as e:
+            print(f"\n❌ Error searching for user: {e}")
+            import traceback
+            traceback.print_exc()
+            recordings = []
         
         if recordings:
             print(f"Found {len(recordings)} unprocessed recordings for {firstname} {lastname}")
