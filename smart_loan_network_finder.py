@@ -254,9 +254,35 @@ if __name__ == "__main__":
     
     # Save list of recordings to transcribe
     if to_transcribe:
+        # Convert datetime objects to strings for JSON
+        for rec in to_transcribe:
+            if 'timestamp' in rec and hasattr(rec['timestamp'], 'isoformat'):
+                rec['timestamp'] = rec['timestamp'].isoformat()
+        
         with open('recordings_to_transcribe.json', 'w') as f:
-            json.dump(to_transcribe, f, indent=2)
+            json.dump(to_transcribe, f, indent=2, default=str)
         print(f"\nSaved {len(to_transcribe)} recordings to: recordings_to_transcribe.json")
     
-    # Example: Create timeline for a specific loan
-    # create_comprehensive_timeline("12345678")
+    # Show loan numbers found
+    print("\n" + "="*60)
+    print("LOAN NUMBERS FOUND SO FAR:")
+    print("="*60)
+    
+    conn = pymysql.connect(**DB_CONFIG, cursorclass=pymysql.cursors.DictCursor)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT DISTINCT loan_number, COUNT(*) as count
+        FROM loan_number_index
+        GROUP BY loan_number
+        ORDER BY count DESC
+    """)
+    
+    loans = cursor.fetchall()
+    for loan in loans:
+        print(f"Loan #{loan['loan_number']}: {loan['count']} calls")
+    
+    cursor.close()
+    conn.close()
+    
+    print("\nNext step: Run process_loan_networks.py to transcribe all 778 calls!")
