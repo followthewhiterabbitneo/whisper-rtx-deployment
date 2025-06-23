@@ -29,7 +29,7 @@ try:
     print("-" * 40)
     cursor.execute("DESCRIBE orktape")
     columns = cursor.fetchall()
-    key_columns = ['uid', 'filename', 'localparty', 'remoteparty', 'duration', 'timestamp']
+    key_columns = ['orkUid', 'filename', 'localParty', 'remoteParty', 'duration', 'timestamp']
     for col in columns:
         if col['Field'] in key_columns:
             print(f"   {col['Field']:<15} {col['Type']}")
@@ -38,7 +38,7 @@ try:
     print("\n2. RECENT RECORDINGS (last 24 hours):")
     print("-" * 40)
     cursor.execute("""
-        SELECT uid, filename, localparty, remoteparty, duration, timestamp
+        SELECT orkUid as orkuid, filename, localParty, remoteParty, duration, timestamp
         FROM orktape
         WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 1 DAY)
         AND duration >= 120
@@ -49,10 +49,10 @@ try:
     recordings = cursor.fetchall()
     if recordings:
         for rec in recordings[:5]:
-            print(f"\nUID: {rec['uid']}")
+            print(f"\nUID: {rec['orkuid']}")
             print(f"File: {rec['filename']}")
-            print(f"Local: {rec['localparty']}")
-            print(f"Remote: {rec['remoteparty']}")
+            print(f"Local: {rec['localParty']}")
+            print(f"Remote: {rec['remoteParty']}")
             print(f"Duration: {rec['duration']}s")
             print(f"Time: {rec['timestamp']}")
     else:
@@ -78,7 +78,7 @@ try:
     
     # Sample users
     cursor.execute("""
-        SELECT uid, firstname, lastname, loginstring
+        SELECT id, firstname, lastname
         FROM orkuser
         WHERE firstname IS NOT NULL AND lastname IS NOT NULL
         LIMIT 10
@@ -101,14 +101,14 @@ try:
     # Sample linked data
     cursor.execute("""
         SELECT 
-            t.uid,
-            t.localparty,
-            t.remoteparty,
+            t.orkUid,
+            t.localParty,
+            t.remoteParty,
             u.firstname,
             u.lastname
         FROM orktape t
-        JOIN orksegment s ON t.uid = s.fktape
-        JOIN orkuser u ON s.fkuser = u.uid
+        JOIN orksegment s ON t.orkUid = s.tape_id
+        JOIN orkuser u ON s.user_id = u.id
         WHERE t.timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         LIMIT 10
     """)
@@ -117,18 +117,18 @@ try:
     if linked:
         print("\nSample linked recordings:")
         for link in linked[:3]:
-            print(f"\n  Recording: {link['uid']}")
-            print(f"  Parties: {link['localparty']} <-> {link['remoteparty']}")
+            print(f"\n  Recording: {link['orkUid']}")
+            print(f"  Parties: {link['localParty']} <-> {link['remoteParty']}")
             print(f"  User: {link['firstname']} {link['lastname']}")
     
     # 5. Search for names in party fields
     print("\n5. SEARCHING FOR 'ERIC' OR 'RAWLINS' IN PARTIES:")
     print("-" * 40)
     cursor.execute("""
-        SELECT uid, localparty, remoteparty, duration, timestamp
+        SELECT orkUid as orkuid, localParty, remoteParty, duration, timestamp
         FROM orktape
-        WHERE (localparty LIKE '%Eric%' OR localparty LIKE '%Rawlins%'
-           OR remoteparty LIKE '%Eric%' OR remoteparty LIKE '%Rawlins%')
+        WHERE (localParty LIKE '%Eric%' OR localParty LIKE '%Rawlins%'
+           OR remoteParty LIKE '%Eric%' OR remoteParty LIKE '%Rawlins%')
         AND duration >= 120
         ORDER BY timestamp DESC
         LIMIT 10
@@ -138,8 +138,8 @@ try:
     if eric_recordings:
         print(f"Found {len(eric_recordings)} recordings with 'Eric' or 'Rawlins':")
         for rec in eric_recordings:
-            print(f"\n  UID: {rec['uid']}")
-            print(f"  Parties: {rec['localparty']} <-> {rec['remoteparty']}")
+            print(f"\n  UID: {rec['orkuid']}")
+            print(f"  Parties: {rec['localParty']} <-> {rec['remoteParty']}")
             print(f"  Duration: {rec['duration']}s")
     else:
         print("No recordings found with 'Eric' or 'Rawlins' in party names")

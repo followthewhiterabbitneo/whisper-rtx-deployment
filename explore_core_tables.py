@@ -75,18 +75,18 @@ try:
         if table_name == 'orktape' and row_count > 0:
             print("\nRecent Recordings (last 5):")
             cursor.execute("""
-                SELECT uid, filename, duration, timestamp, localparty, remoteparty
+                SELECT orkUid as orkuid, filename, duration, timestamp, localParty, remoteParty
                 FROM orktape
                 ORDER BY timestamp DESC
                 LIMIT 5
             """)
             for rec in cursor.fetchall():
-                print(f"  - {rec['uid']} | {rec['timestamp']} | {rec['duration']}s | {rec['localparty']}")
+                print(f"  - {rec['uid']} | {rec['timestamp']} | {rec['duration']}s | {rec['localParty']}")
         
         elif table_name == 'orkuser' and row_count > 0:
             print("\nSample Users:")
             cursor.execute("""
-                SELECT uid, firstname, lastname, loginstring
+                SELECT orkUid as orkuid, firstname, lastname, loginstring
                 FROM orkuser
                 WHERE firstname IS NOT NULL AND lastname IS NOT NULL
                 LIMIT 5
@@ -115,7 +115,7 @@ try:
     
     call_transcripts
         |
-        └── orkuid → references orktape.uid
+        └── orkuid → references orktape.orkUid
     """)
     
     # Check for the recordings table (might be aliased)

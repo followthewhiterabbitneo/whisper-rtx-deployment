@@ -24,15 +24,15 @@ DB_NAME = "oreka"
 # Looking for recent calls (last 7 days) with decent duration
 sql_query = """
 SELECT 
-    r.orkuid,
+    r.orkUid,
     r.filename,
     r.duration,
     r.timestamp,
     u.firstname,
     u.lastname
 FROM oreka.recordings r
-JOIN oreka.orksegments s ON r.orkuid = s.fkrecordings
-JOIN oreka.orkusers u ON s.fkorkusers = u.uid
+JOIN oreka.orksegments s ON r.orkUid = s.tape_id
+JOIN oreka.orkusers u ON s.user_id = u.id
 WHERE 
     u.firstname = 'Eric' 
     AND u.lastname = 'Rawlins'

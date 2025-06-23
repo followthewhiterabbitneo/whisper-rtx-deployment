@@ -46,21 +46,21 @@ class BatchProcessor:
         # Join with orksegment and orkuser to get underwriter info
         query = """
         SELECT 
-            t.uid as orkuid,
+            t.orkUid as orkuid,
             t.filename,
             t.duration,
             t.timestamp,
             u.firstname,
             u.lastname
         FROM orktape t
-        LEFT JOIN call_transcripts_v2 ct ON t.uid = ct.orkuid
-        LEFT JOIN orksegment s ON t.uid = s.fktape
-        LEFT JOIN orkuser u ON s.fkuser = u.uid
+        LEFT JOIN call_transcripts_v2 ct ON t.orkUid = ct.orkuid
+        LEFT JOIN orksegment s ON t.orkUid = s.tape_id
+        LEFT JOIN orkuser u ON s.user_id = u.id
         WHERE 
             ct.orkuid IS NULL  -- Not yet processed
             AND t.duration >= 120  -- At least 2 minutes
             AND t.timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)  -- Last 7 days
-        GROUP BY t.uid
+        GROUP BY t.orkUid
         ORDER BY t.timestamp DESC
         LIMIT %s
         """
@@ -169,7 +169,7 @@ class BatchProcessor:
         try:
             # First check if the user exists
             check_user_query = """
-            SELECT DISTINCT u.uid, u.firstname, u.lastname 
+            SELECT DISTINCT u.id, u.firstname, u.lastname 
             FROM orkuser u
             WHERE u.firstname LIKE %s OR u.lastname LIKE %s
             LIMIT 10
@@ -182,17 +182,17 @@ class BatchProcessor:
             if users:
                 print(f"\nFound users matching '{firstname}' or '{lastname}':")
                 for user in users:
-                    print(f"  - {user['firstname']} {user['lastname']} (uid: {user['uid']})")
+                    print(f"  - {user['firstname']} {user['lastname']} (id: {user['id']})")
             else:
                 print(f"\nNo users found matching '{firstname}' or '{lastname}'")
                 
                 # Let's check the orktape table directly for parties
                 print("\nChecking recordings with party names...")
                 party_query = """
-                SELECT DISTINCT localparty, remoteparty 
+                SELECT DISTINCT localParty, remoteParty 
                 FROM orktape 
-                WHERE localparty LIKE %s OR localparty LIKE %s 
-                   OR remoteparty LIKE %s OR remoteparty LIKE %s
+                WHERE localParty LIKE %s OR localParty LIKE %s 
+                   OR remoteParty LIKE %s OR remoteParty LIKE %s
                 LIMIT 10
                 """
                 cursor.execute(party_query, (f'%{firstname}%', f'%{lastname}%', f'%{firstname}%', f'%{lastname}%'))
@@ -201,28 +201,28 @@ class BatchProcessor:
                 if parties:
                     print("\nFound party names:")
                     for party in parties:
-                        print(f"  Local: {party['localparty']} | Remote: {party['remoteparty']}")
+                        print(f"  Local: {party['localParty']} | Remote: {party['remoteParty']}")
             
             query = """
             SELECT 
-                t.uid as orkuid,
+                t.orkUid as orkuid,
                 t.filename,
                 t.duration,
                 t.timestamp,
-                t.localparty,
-                t.remoteparty
+                t.localParty,
+                t.remoteParty
             FROM orktape t
-            LEFT JOIN call_transcripts_v2 ct ON t.uid = ct.orkuid
-            LEFT JOIN orksegment s ON t.uid = s.fktape
-            LEFT JOIN orkuser u ON s.fkuser = u.uid
+            LEFT JOIN call_transcripts_v2 ct ON t.orkUid = ct.orkuid
+            LEFT JOIN orksegment s ON t.orkUid = s.tape_id
+            LEFT JOIN orkuser u ON s.user_id = u.id
             WHERE 
                 ct.orkuid IS NULL
                 AND (
                     (u.firstname = %s AND u.lastname = %s)
-                    OR t.localparty LIKE %s 
-                    OR t.localparty LIKE %s
-                    OR t.remoteparty LIKE %s
-                    OR t.remoteparty LIKE %s
+                    OR t.localParty LIKE %s 
+                    OR t.localParty LIKE %s
+                    OR t.remoteParty LIKE %s
+                    OR t.remoteParty LIKE %s
                 )
                 AND t.duration >= 120
             ORDER BY t.timestamp DESC
