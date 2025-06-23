@@ -39,6 +39,9 @@ USERS_TO_PROCESS = [
     "Zach Mladenoski"
 ]
 
+# Additional last names to search for (any first name)
+LAST_NAME_SEARCHES = ["Krall", "Rahimifar"]
+
 # Database configuration
 DB_CONFIG = {
     'host': 's40vpsoxweb002',
@@ -170,6 +173,31 @@ def find_user_id(firstname, lastname):
         print(f"Error finding user: {e}")
         return None
 
+def find_users_by_lastname(lastname):
+    """Find all users with a specific last name"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, firstname, lastname, email
+            FROM orkuser
+            WHERE lastname = %s
+            AND deleted = 0
+            ORDER BY firstname
+        """, (lastname,))
+        
+        users = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return users
+        
+    except Exception as e:
+        print(f"Error finding users by lastname: {e}")
+        return []
+
 def find_user_recordings_by_segment(user_id, min_duration=90):
     """Find recordings via orksegment table using user_id"""
     try:
@@ -269,6 +297,46 @@ def main():
         else:
             users_without_recordings.append(full_name)
             print(f"✗ No recordings found for user ID {user['id']}")
+    
+    # Process additional last names (any first name)
+    print("\n" + "=" * 80)
+    print("SEARCHING BY LAST NAME ONLY")
+    print("=" * 80)
+    
+    for lastname in LAST_NAME_SEARCHES:
+        print(f"\n{'='*60}")
+        print(f"Searching for all users with last name: {lastname}")
+        
+        users = find_users_by_lastname(lastname)
+        
+        if not users:
+            print(f"✗ No users found with last name '{lastname}'")
+            continue
+        
+        print(f"✓ Found {len(users)} users with last name '{lastname}':")
+        
+        for user in users:
+            full_name = f"{user['firstname']} {user['lastname']}"
+            print(f"\nProcessing: {full_name} (ID: {user['id']})")
+            
+            # Find recordings for this user
+            recordings = find_user_recordings_by_segment(user['id'], min_duration=90)
+            
+            if recordings:
+                users_with_recordings += 1
+                total_recordings += len(recordings)
+                
+                print(f"✓ Found {len(recordings)} recordings")
+                
+                # Add user info to each recording
+                for rec in recordings:
+                    rec['target_user'] = full_name
+                    rec['user_firstname'] = user['firstname']
+                    rec['user_lastname'] = user['lastname']
+                    all_recordings.append(rec)
+            else:
+                users_without_recordings.append(full_name)
+                print(f"✗ No recordings found for user ID {user['id']}")
     
     # Summary
     print("\n" + "=" * 80)
