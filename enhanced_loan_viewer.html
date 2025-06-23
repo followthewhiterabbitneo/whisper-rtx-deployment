@@ -619,8 +619,8 @@
             const loanNumber = document.getElementById('loanNumber').value;
             if (!loanNumber) return;
             
-            const summaryFile = `loan_${loanNumber}_SUMMARY.html`;
-            alert(`To generate a comprehensive summary:\n\n1. Run: python summarize_loan_story.py\n2. Enter loan number: ${loanNumber}\n3. Open the generated file: ${summaryFile}`);
+            const summaryFile = `loan_${loanNumber}_LEGAL_BRIEF.html`;
+            alert(`To generate a professional legal brief with AI analysis:\n\n1. Run: python generate_legal_loan_summary.py\n2. Enter loan number: ${loanNumber}\n3. The legal brief will open automatically\n\nThis uses Gemma/Llama AI to create detailed legal summaries!`);
         }
         
         async function exportTimeline(format) {
