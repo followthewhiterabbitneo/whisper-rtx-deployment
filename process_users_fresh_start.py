@@ -8,6 +8,7 @@ import sys
 import pymysql
 from datetime import datetime
 import time
+import subprocess
 
 # List of all users to process
 USERS_TO_PROCESS = [
@@ -370,64 +371,99 @@ def main():
         print("Cancelled.")
         return
     
-    # Import and run the pipeline
-    try:
-        from scream_hybrid_pipeline import WhisperGemmaPipeline
+    # Check if scream_hybrid_pipeline.py exists
+    if not os.path.exists("scream_hybrid_pipeline.py"):
+        print("\nERROR: scream_hybrid_pipeline.py not found in current directory")
+        print("Please ensure you're running from the correct directory")
+        print("\nExpected to find: scream_hybrid_pipeline.py")
+        print("Current directory:", os.getcwd())
+        return
+    
+    # Process using subprocess calls to scream_hybrid_pipeline.py
+    print("\nStarting SCREAM pipeline...")
+    
+    # Process recordings
+    processed = 0
+    failed = 0
+    
+    start_time = time.time()
+    
+    for i, rec in enumerate(all_recordings, 1):
+        print(f"\n[{i}/{total_recordings}] Processing: {rec['target_user']} - {rec['orkUid']}")
+        print(f"  Timestamp: {rec['timestamp']}")
+        print(f"  Duration: {rec['duration']}s ({rec['duration']/60:.1f}m)")
         
-        print("\nStarting SCREAM pipeline...")
-        pipeline = WhisperGemmaPipeline()
-        
-        # Process recordings
-        processed = 0
-        failed = 0
-        
-        start_time = time.time()
-        
-        for i, rec in enumerate(all_recordings, 1):
-            print(f"\n[{i}/{total_recordings}] Processing: {rec['target_user']} - {rec['orkUid']}")
-            print(f"  Timestamp: {rec['timestamp']}")
-            print(f"  Duration: {rec['duration']}s ({rec['duration']/60:.1f}m)")
+        try:
+            # Download the audio file via SCP
+            remote_path = f"/var/log/orkaudio.prod.nfs/audio/{rec['filename']}"
+            local_path = f"temp_audio/{rec['orkUid']}.wav"
             
-            try:
-                # Process the recording
-                pipeline.process_recording({
-                    'orkuid': rec['orkUid'],
-                    'filename': rec['filename'],
-                    'timestamp': rec['timestamp'],
-                    'duration': rec['duration'],
-                    'localParty': rec['localParty'],
-                    'remoteParty': rec['remoteParty'],
-                    'user_firstname': rec['user_firstname'],
-                    'user_lastname': rec['user_lastname']
-                })
-                
-                processed += 1
-                
-                # Show progress
-                elapsed = time.time() - start_time
-                rate = processed / (elapsed / 3600) if elapsed > 0 else 0
-                remaining = (total_recordings - processed) / rate if rate > 0 else 0
-                
-                print(f"  ✓ Processed successfully")
-                print(f"  Progress: {processed}/{total_recordings} ({processed/total_recordings*100:.1f}%)")
-                print(f"  Rate: {rate:.1f} recordings/hour")
-                print(f"  Est. time remaining: {remaining:.1f} hours")
-                
-            except Exception as e:
+            # Create temp directory
+            os.makedirs("temp_audio", exist_ok=True)
+            
+            # Download file
+            import subprocess
+            scp_command = [
+                "scp",
+                f"estillmane@s40vpsoxweb002:{remote_path}",
+                local_path
+            ]
+            
+            result = subprocess.run(scp_command, capture_output=True, text=True)
+            
+            if result.returncode != 0 or not os.path.exists(local_path):
                 failed += 1
-                print(f"  ✗ Failed: {e}")
-        
-        # Final summary
-        print("\n" + "=" * 80)
-        print("PROCESSING COMPLETE!")
-        print(f"- Processed: {processed}")
-        print(f"- Failed: {failed}")
-        print(f"- Total time: {(time.time() - start_time)/60:.1f} minutes")
-        print("=" * 80)
-        
-    except ImportError:
-        print("\nERROR: Could not import scream_hybrid_pipeline.py")
-        print("Make sure you're running this from the correct directory")
+                print(f"  ✗ Failed to download audio file")
+                continue
+            
+            # Run scream_hybrid_pipeline.py
+            cmd = [
+                sys.executable,
+                "scream_hybrid_pipeline.py",
+                rec['orkUid'],
+                local_path
+            ]
+            
+            # Add user info as environment variables
+            env = os.environ.copy()
+            env['USER_FIRSTNAME'] = rec.get('user_firstname', '')
+            env['USER_LASTNAME'] = rec.get('user_lastname', '')
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+            
+            if result.returncode == 0:
+                processed += 1
+                print(f"  ✓ Processed successfully")
+            else:
+                failed += 1
+                print(f"  ✗ Pipeline failed")
+                if result.stderr:
+                    print(f"     Error: {result.stderr[:200]}...")
+            
+            # Clean up temp file
+            if os.path.exists(local_path):
+                os.remove(local_path)
+            
+            # Show progress
+            elapsed = time.time() - start_time
+            rate = processed / (elapsed / 3600) if elapsed > 0 else 0
+            remaining = (total_recordings - processed) / rate if rate > 0 else 0
+            
+            print(f"  Progress: {processed}/{total_recordings} ({processed/total_recordings*100:.1f}%)")
+            print(f"  Rate: {rate:.1f} recordings/hour")
+            print(f"  Est. time remaining: {remaining:.1f} hours")
+            
+        except Exception as e:
+            failed += 1
+            print(f"  ✗ Error: {e}")
+    
+    # Final summary
+    print("\n" + "=" * 80)
+    print("PROCESSING COMPLETE!")
+    print(f"- Processed: {processed}")
+    print(f"- Failed: {failed}")
+    print(f"- Total time: {(time.time() - start_time)/60:.1f} minutes")
+    print("=" * 80)
 
 if __name__ == "__main__":
     main()
