@@ -170,6 +170,7 @@ def generate_loan_brief(loan_number):
     all_dates = {}
     all_names = defaultdict(set)
     sentiment_counts = defaultdict(int)
+    untranscribed_count = 0
     
     # Generate brief
     output_file = f"LOAN_BRIEF_{loan_number}.txt"
@@ -253,13 +254,28 @@ def generate_loan_brief(loan_number):
                     if call.get('summary'):
                         f.write(f"\n   📝 Summary: {call['summary']}\n")
                     
-                    f.write(f"\n   📂 Transcript: {call.get('transcript_path', 'N/A')}\n")
+                    # Check transcription status
+                    transcript_path = call.get('transcript_path', '')
+                    transcript_text = call.get('transcript_text', '')
+                    
+                    if not transcript_path and not transcript_text:
+                        f.write(f"\n   ⚠️ STATUS: NOT TRANSCRIBED YET\n")
+                        f.write(f"   📂 Audio file needs transcription\n")
+                        untranscribed_count += 1
+                    else:
+                        f.write(f"\n   📂 Transcript: {transcript_path or 'In database'}\n")
+                    
                     f.write("-" * 60 + "\n")
         
         # Executive Summary Section
         f.write("\n\n" + "="*100 + "\n")
         f.write("EXECUTIVE SUMMARY\n")
         f.write("="*100 + "\n\n")
+        
+        # Transcription Status
+        if untranscribed_count > 0:
+            f.write(f"⚠️ ATTENTION: {untranscribed_count} calls NOT TRANSCRIBED YET!\n")
+            f.write(f"   → {len(calls) - untranscribed_count} of {len(calls)} calls have transcripts\n\n")
         
         # Key People
         f.write("👥 KEY PEOPLE INVOLVED:\n")
