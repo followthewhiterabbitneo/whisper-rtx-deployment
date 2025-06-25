@@ -237,7 +237,7 @@ async def show_timeline(loan_number: str):
             <div class="timeline-content">
                 <div class="call-header">
                     <span class="call-number">Call #{idx}</span>
-                    <span class="call-date">{call['timestamp'].strftime('%m/%d/%Y %I:%M %p')}</span>
+                    <span class="call-date">{call['timestamp'].strftime('%m/%d/%Y %I:%M %p')} EST</span>
                     <span class="call-duration">{call['duration']}s</span>
                 </div>
                 <div class="call-parties">
@@ -256,6 +256,11 @@ async def show_timeline(loan_number: str):
                         <button class="thumbs-down" onclick="markBad('{call_id}')" title="Wrong loan">
                             👎
                         </button>
+                        <div class="loan-correction" id="correction_{call_id}" style="display:none;">
+                            <input type="text" placeholder="Correct loan #" id="correct_loan_{call_id}" class="correction-input">
+                            <button onclick="submitCorrection('{call_id}')" class="btn-submit-small">✓</button>
+                            <button onclick="cancelCorrection('{call_id}')" class="btn-cancel-small">✗</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -452,6 +457,31 @@ async def show_timeline(loan_number: str):
             .thumbs-down.active {{
                 background: #f8d7da;
             }}
+            .loan-correction {{
+                display: inline-flex;
+                gap: 5px;
+                align-items: center;
+                margin-left: 10px;
+            }}
+            .correction-input {{
+                padding: 5px 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                width: 120px;
+                font-size: 14px;
+            }}
+            .btn-submit-small, .btn-cancel-small {{
+                background: #28a745;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+            }}
+            .btn-cancel-small {{
+                background: #dc3545;
+            }}
             .transcript-path {{
                 display: flex;
                 align-items: center;
@@ -559,13 +589,32 @@ async def show_timeline(loan_number: str):
             }}
             
             async function markBad(callId) {{
-                // Toggle active state
-                const callDiv = document.getElementById('call_' + callId);
-                const thumbsUp = callDiv.querySelector('.thumbs-up');
-                const thumbsDown = callDiv.querySelector('.thumbs-down');
+                // Show correction input
+                const correctionDiv = document.getElementById('correction_' + callId);
+                correctionDiv.style.display = 'inline-flex';
+                document.getElementById('correct_loan_' + callId).focus();
+            }}
+            
+            function cancelCorrection(callId) {{
+                document.getElementById('correction_' + callId).style.display = 'none';
+                document.getElementById('correct_loan_' + callId).value = '';
+            }}
+            
+            async function submitCorrection(callId) {{
+                const correctLoan = document.getElementById('correct_loan_' + callId).value.trim();
                 
-                thumbsDown.classList.toggle('active');
-                thumbsUp.classList.remove('active');
+                if (!correctLoan) {{
+                    alert('Please enter the correct loan number');
+                    return;
+                }}
+                
+                // Update UI
+                const callDiv = document.getElementById('call_' + callId);
+                const thumbsDown = callDiv.querySelector('.thumbs-down');
+                thumbsDown.classList.add('active');
+                
+                // Hide input
+                document.getElementById('correction_' + callId).style.display = 'none';
                 
                 // Send feedback
                 await fetch('/feedback', {{
@@ -573,9 +622,12 @@ async def show_timeline(loan_number: str):
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{
                         call_id: callId,
-                        type: 'wrong'
+                        type: 'wrong',
+                        correct_loan: correctLoan
                     }})
                 }});
+                
+                showToast(`Marked for loan #${{correctLoan}}`);
             }}
             
             function showToast(message) {{
