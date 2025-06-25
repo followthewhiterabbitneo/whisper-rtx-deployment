@@ -643,6 +643,6 @@ async def save_feedback(data: dict):
 
 if __name__ == "__main__":
     print("Starting Loan Timeline with Feedback...")
-    print("Open: http://localhost:8000")
+    print("Open: http://localhost:8001")
     print("\nReview calls and provide feedback on wrong loan assignments!")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
