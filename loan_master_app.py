@@ -2252,7 +2252,7 @@ async def analytics():
 
 if __name__ == "__main__":
     print("Starting Loan Master App...")
-    print("Open: http://localhost:8000")
+    print("Open: http://localhost:8006")
     print("\nAll features available on one port!")
     print("\nAvailable routes:")
     print("  /                    - Home with all features")
@@ -2264,4 +2264,4 @@ if __name__ == "__main__":
     print("  /add-call            - Add missing calls")
     print("  /analytics           - Loan analytics")
     
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8006)

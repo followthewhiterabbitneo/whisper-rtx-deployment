@@ -566,6 +566,6 @@ async def show_journey(loan_number: str):
 
 if __name__ == "__main__":
     print("Starting Loan Bouncing Ball Visualization...")
-    print("Open: http://localhost:8000")
+    print("Open: http://localhost:8005")
     print("\nFollow the loan journey from submission to Clear to Close!")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8005)
