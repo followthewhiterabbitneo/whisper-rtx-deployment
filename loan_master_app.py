@@ -1143,18 +1143,18 @@ async def broker_tracker(phone: str = None, loan: str = None):
             </div>
             
             <script>
-                function copyToClipboard(text) {
-                    navigator.clipboard.writeText(text).then(function() {
+                function copyToClipboard(text) {{
+                    navigator.clipboard.writeText(text).then(function() {{
                         // Create a temporary toast notification
                         const toast = document.createElement('div');
                         toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 10px 20px; border-radius: 5px; z-index: 1000;';
                         toast.textContent = 'Path copied to clipboard!';
                         document.body.appendChild(toast);
                         setTimeout(() => document.body.removeChild(toast), 2000);
-                    }, function(err) {
+                    }}, function(err) {{
                         alert('Failed to copy path');
-                    });
-                }
+                    }});
+                }}
             </script>
         </body>
         </html>
@@ -1738,6 +1738,9 @@ async def untranscribed_loan_details(loan_number: str):
         
         queue_content += f"{call['orkuid']}|{audio_path}\n"
     
+    # Escape backticks for JavaScript
+    queue_content_escaped = queue_content.replace("`", "\\`")
+    
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -1859,7 +1862,7 @@ async def untranscribed_loan_details(loan_number: str):
         
         <script>
             function downloadQueue() {{
-                const content = `{queue_content.replace('`', '\\`')}`;
+                const content = `{queue_content_escaped}`;
                 const blob = new Blob([content], {{ type: 'text/plain' }});
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
