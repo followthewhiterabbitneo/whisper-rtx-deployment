@@ -31,19 +31,20 @@ async def home():
     conn = pymysql.connect(**DB_CONFIG, cursorclass=pymysql.cursors.DictCursor)
     cursor = conn.cursor()
     
-    # Get loans with counts
+    # Get loans with counts - ONLY 10+ calls
     cursor.execute("""
         SELECT 
             loan_numbers,
             COUNT(*) as mention_count,
             MIN(t.timestamp) as first_mention,
-            MAX(t.timestamp) as last_mention
+            MAX(t.timestamp) as last_mention,
+            SUM(CASE WHEN t.localParty LIKE '19472421%%' OR t.remoteParty LIKE '19472421%%' THEN 1 ELSE 0 END) as processor_calls
         FROM call_transcripts_v2 ct
         JOIN orktape t ON ct.orkuid = t.orkUid
         WHERE loan_numbers != '[]'
         GROUP BY loan_numbers
-        HAVING mention_count >= 3
-        ORDER BY last_mention DESC
+        HAVING mention_count >= 10
+        ORDER BY mention_count DESC, last_mention DESC
         LIMIT 50
     """)
     
@@ -63,7 +64,11 @@ async def home():
                     <div class="stats">
                         <div class="stat">
                             <span class="value">{row['mention_count']}</span>
-                            <span class="label">mentions</span>
+                            <span class="label">calls</span>
+                        </div>
+                        <div class="stat">
+                            <span class="value">{row['processor_calls']}</span>
+                            <span class="label">processor</span>
                         </div>
                         <div class="stat">
                             <span class="value">{days}</span>
@@ -156,7 +161,7 @@ async def home():
     <body>
         <div class="container">
             <h1>🎯 Loan Timeline with Feedback</h1>
-            <p class="subtitle">Review calls and provide feedback</p>
+            <p class="subtitle">Showing loans with 10+ calls including processor assistants</p>
             <div class="loan-grid">
                 {loan_cards}
             </div>
