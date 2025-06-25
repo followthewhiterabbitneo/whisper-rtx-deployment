@@ -42,7 +42,9 @@ def process_file(audio_file, model):
         output.append(seg.text.strip())
     
     # Save
-    output_file = f"{Path(audio_file).stem}_turns.txt"
+    output_dir = Path("turn_by_turn_output")
+    output_dir.mkdir(exist_ok=True)
+    output_file = output_dir / f"{Path(audio_file).stem}_turns.txt"
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(output))
     
