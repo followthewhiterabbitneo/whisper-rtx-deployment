@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import pymysql
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import uvicorn
 import re
@@ -28,6 +28,13 @@ DB_CONFIG = {
 
 # Store feedback in memory
 feedback_data = {}
+
+def gmt_to_est(timestamp):
+    """Convert GMT timestamp to EST (GMT-5)"""
+    if timestamp:
+        # Subtract 5 hours for EST (you might want to handle DST properly in production)
+        return timestamp - timedelta(hours=5)
+    return timestamp
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
@@ -421,16 +428,21 @@ async def timeline(loan_number: str = None):
                 <div class="timeline-content">
                     <div class="call-header">
                         <span class="call-number">Call #{idx}</span>
-                        <span class="call-date">{call['timestamp'].strftime('%m/%d/%Y %I:%M %p')} EST</span>
+                        <span class="call-date">{gmt_to_est(call['timestamp']).strftime('%m/%d/%Y %I:%M %p')} EST</span>
                         <span class="call-duration">{call['duration']}s</span>
                     </div>
                     <div class="call-parties">
-                        <span class="party from clickable" onclick="searchBroker('{call['localParty']}')">{call['localParty']}</span>
+                        <div class="party-wrapper">
+                            <span class="party from clickable" onclick="searchBroker('{call['localParty']}')">{call['localParty']}</span>
+                            <span class="user-name">{call['user_name']}</span>
+                        </div>
                         <span class="arrow">→</span>
-                        <span class="party to clickable" onclick="searchBroker('{call['remoteParty']}')">{call['remoteParty']}</span>
+                        <div class="party-wrapper">
+                            <span class="party to clickable" onclick="searchBroker('{call['remoteParty']}')">{call['remoteParty']}</span>
+                        </div>
                     </div>
-                    <div class="call-user">User: {call['user_name']}</div>
                     {'<div class="processor-tag">PROCESSOR ASSISTANT</div>' if is_processor else ''}
+                    <div style="color: #95a5a6; font-size: 12px; font-family: monospace; margin: 5px 0;">orkuid: {call_id}</div>
                     
                     <div class="feedback-section">
                         <div class="feedback-controls">
@@ -612,11 +624,24 @@ async def timeline(loan_number: str = None):
                 .call-parties {{
                     font-size: 16px;
                     margin: 10px 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }}
+                .party-wrapper {{
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }}
                 .party {{
                     font-weight: 500;
                     padding: 4px 8px;
                     border-radius: 4px;
+                }}
+                .user-name {{
+                    font-size: 12px;
+                    color: #7f8c8d;
+                    margin-top: 2px;
                 }}
                 .party.clickable {{
                     background: #e3f2fd;
@@ -899,6 +924,7 @@ async def broker_tracker(phone: str = None, loan: str = None):
                 t.remoteParty,
                 ct.loan_numbers,
                 ct.summary,
+                ct.transcript_path,
                 COALESCE(CONCAT(u.firstname, ' ', u.lastname), 'Unknown') as user_name
             FROM orktape t
             LEFT JOIN call_transcripts_v2 ct ON t.orkUid = ct.orkuid
@@ -934,15 +960,30 @@ async def broker_tracker(phone: str = None, loan: str = None):
                 else:
                     row_class = "different-loan"
             
+            # Get transcript info
+            transcript_link = ""
+            if call.get('transcript_path'):
+                transcript_link = f'<a href="#" onclick="copyToClipboard(\'{call["transcript_path"]}\'); return false;" title="Click to copy path">📄</a>'
+            
             call_rows += f'''
             <tr class="{row_class}">
                 <td>{idx}</td>
-                <td>{call['timestamp'].strftime('%m/%d/%Y %I:%M %p')}</td>
+                <td>{gmt_to_est(call['timestamp']).strftime('%m/%d/%Y %I:%M %p')}</td>
                 <td>{call['duration']}s</td>
-                <td>{call['localParty']}</td>
-                <td>{call['remoteParty']}</td>
+                <td>
+                    <div class="phone-with-user">
+                        <div>{call['localParty']}</div>
+                        <div class="user-label">{call['user_name']}</div>
+                    </div>
+                </td>
+                <td>
+                    <div class="phone-with-user">
+                        <div>{call['remoteParty']}</div>
+                    </div>
+                </td>
                 <td>{loan_info}</td>
-                <td>{call['user_name']}</td>
+                <td style="color: #95a5a6; font-size: 12px; font-family: monospace;">{call['orkUid']}</td>
+                <td>{transcript_link}</td>
             </tr>
             '''
         
@@ -1033,6 +1074,23 @@ async def broker_tracker(phone: str = None, loan: str = None):
                     height: 20px;
                     border-radius: 4px;
                 }}
+                .phone-with-user {{
+                    display: inline-flex;
+                    flex-direction: column;
+                    align-items: center;
+                }}
+                .user-label {{
+                    font-size: 11px;
+                    color: #95a5a6;
+                    margin-top: 2px;
+                }}
+                a {{
+                    color: #3498db;
+                    text-decoration: none;
+                }}
+                a:hover {{
+                    text-decoration: underline;
+                }}
             </style>
         </head>
         <body>
@@ -1069,12 +1127,13 @@ async def broker_tracker(phone: str = None, loan: str = None):
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Date/Time</th>
+                            <th>Date/Time (EST)</th>
                             <th>Duration</th>
                             <th>From</th>
                             <th>To</th>
                             <th>Loan</th>
-                            <th>User</th>
+                            <th>orkUid</th>
+                            <th>Transcript</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1082,6 +1141,21 @@ async def broker_tracker(phone: str = None, loan: str = None):
                     </tbody>
                 </table>
             </div>
+            
+            <script>
+                function copyToClipboard(text) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        // Create a temporary toast notification
+                        const toast = document.createElement('div');
+                        toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 10px 20px; border-radius: 5px; z-index: 1000;';
+                        toast.textContent = 'Path copied to clipboard!';
+                        document.body.appendChild(toast);
+                        setTimeout(() => document.body.removeChild(toast), 2000);
+                    }, function(err) {
+                        alert('Failed to copy path');
+                    });
+                }
+            </script>
         </body>
         </html>
         """
