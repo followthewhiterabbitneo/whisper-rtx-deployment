@@ -34,7 +34,6 @@ async def home():
         FROM call_transcripts_v2
         WHERE loan_numbers != '[]'
         ORDER BY created_at DESC
-        LIMIT 50
     """)
     
     rows = cursor.fetchall()
@@ -51,7 +50,7 @@ async def home():
             pass
     
     loan_list = ""
-    for loan in sorted(list(unique_loans))[:20]:
+    for loan in sorted(list(unique_loans)):  # Show ALL loans, no limit
         loan_list += f'<li><a href="/loan/{loan}">Loan #{loan}</a></li>\n'
     
     html = f"""
