@@ -249,16 +249,13 @@ async def show_timeline(loan_number: str):
                 {'<div class="processor-tag">PROCESSOR ASSISTANT</div>' if is_processor else ''}
                 
                 <div class="feedback-section">
-                    {'<div class="feedback-status">✓ Marked as wrong loan - Should be: ' + correct_loan + '</div>' if is_marked_wrong else ''}
-                    <div class="feedback-controls" {'style="display:none;"' if is_marked_wrong else ''}>
-                        <button class="thumbs-down" onclick="markWrongLoan('{call_id}')" title="This call is about a different loan">
-                            👎 Wrong loan
+                    <div class="feedback-controls">
+                        <button class="thumbs-up" onclick="markGood('{call_id}')" title="Correct loan">
+                            👍
                         </button>
-                        <div class="loan-input" id="input_{call_id}" style="display:none;">
-                            <input type="text" placeholder="Enter correct loan #" id="loan_{call_id}">
-                            <button onclick="submitCorrection('{call_id}')">Submit</button>
-                            <button onclick="cancelCorrection('{call_id}')">Cancel</button>
-                        </div>
+                        <button class="thumbs-down" onclick="markBad('{call_id}')" title="Wrong loan">
+                            👎
+                        </button>
                     </div>
                 </div>
                 
@@ -376,13 +373,6 @@ async def show_timeline(loan_number: str):
             .processor .marker-dot {{
                 background: #ff9900;
             }}
-            .marked-wrong .timeline-content {{
-                background: #f8d7da;
-                border: 1px solid #f5c6cb;
-            }}
-            .marked-wrong .marker-dot {{
-                background: #dc3545;
-            }}
             .call-header {{
                 display: flex;
                 justify-content: space-between;
@@ -434,50 +424,33 @@ async def show_timeline(loan_number: str):
                 align-items: center;
                 gap: 10px;
             }}
-            .thumbs-down {{
-                background: #dc3545;
-                color: white;
+            .thumbs-up, .thumbs-down {{
+                background: #f0f0f0;
                 border: none;
-                padding: 6px 12px;
-                border-radius: 4px;
+                padding: 8px 12px;
+                border-radius: 50%;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: 18px;
+                width: 40px;
+                height: 40px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+            }}
+            .thumbs-up:hover {{
+                background: #e0e0e0;
+                transform: scale(1.1);
             }}
             .thumbs-down:hover {{
-                background: #c82333;
+                background: #e0e0e0;
+                transform: scale(1.1);
             }}
-            .loan-input {{
-                display: flex;
-                gap: 5px;
-                align-items: center;
+            .thumbs-up.active {{
+                background: #d4edda;
             }}
-            .loan-input input {{
-                padding: 5px 10px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                width: 150px;
-            }}
-            .loan-input button {{
-                padding: 5px 10px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-            }}
-            .loan-input button:first-of-type {{
-                background: #28a745;
-                color: white;
-            }}
-            .loan-input button:last-of-type {{
-                background: #6c757d;
-                color: white;
-            }}
-            .feedback-status {{
-                color: #721c24;
+            .thumbs-down.active {{
                 background: #f8d7da;
-                padding: 8px 12px;
-                border-radius: 4px;
-                font-size: 14px;
             }}
             .transcript-path {{
                 display: flex;
@@ -565,49 +538,44 @@ async def show_timeline(loan_number: str):
                 setTimeout(() => button.textContent = '📋', 2000);
             }}
             
-            function markWrongLoan(callId) {{
-                document.getElementById('input_' + callId).style.display = 'flex';
-            }}
-            
-            function cancelCorrection(callId) {{
-                document.getElementById('input_' + callId).style.display = 'none';
-                document.getElementById('loan_' + callId).value = '';
-            }}
-            
-            async function submitCorrection(callId) {{
-                const loanInput = document.getElementById('loan_' + callId);
-                const correctLoan = loanInput.value.trim();
+            async function markGood(callId) {{
+                // Toggle active state
+                const callDiv = document.getElementById('call_' + callId);
+                const thumbsUp = callDiv.querySelector('.thumbs-up');
+                const thumbsDown = callDiv.querySelector('.thumbs-down');
                 
-                if (!correctLoan) {{
-                    alert('Please enter the correct loan number');
-                    return;
-                }}
+                thumbsUp.classList.toggle('active');
+                thumbsDown.classList.remove('active');
                 
-                // Send feedback to server
-                const response = await fetch('/feedback', {{
+                // Send feedback
+                await fetch('/feedback', {{
                     method: 'POST',
-                    headers: {{
-                        'Content-Type': 'application/json',
-                    }},
+                    headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{
                         call_id: callId,
-                        type: 'wrong',
-                        correct_loan: correctLoan
+                        type: 'correct'
                     }})
                 }});
+            }}
+            
+            async function markBad(callId) {{
+                // Toggle active state
+                const callDiv = document.getElementById('call_' + callId);
+                const thumbsUp = callDiv.querySelector('.thumbs-up');
+                const thumbsDown = callDiv.querySelector('.thumbs-down');
                 
-                if (response.ok) {{
-                    // Update UI
-                    const callDiv = document.getElementById('call_' + callId);
-                    callDiv.classList.add('marked-wrong');
-                    
-                    const feedbackSection = callDiv.querySelector('.feedback-section');
-                    feedbackSection.innerHTML = `
-                        <div class="feedback-status">✓ Marked as wrong loan - Should be: ${{correctLoan}}</div>
-                    `;
-                    
-                    showToast('Feedback saved successfully!');
-                }}
+                thumbsDown.classList.toggle('active');
+                thumbsUp.classList.remove('active');
+                
+                // Send feedback
+                await fetch('/feedback', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        call_id: callId,
+                        type: 'wrong'
+                    }})
+                }});
             }}
             
             function showToast(message) {{
